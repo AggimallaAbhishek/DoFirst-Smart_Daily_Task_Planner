@@ -27,9 +27,11 @@ async function startServer() {
     pool,
     startedAt: Date.now()
   });
-  const server = app.listen(config.port, () => {
+  const host = '0.0.0.0';
+  const server = app.listen(config.port, host, () => {
     logger.info('Backend server listening.', {
       port: config.port,
+      host,
       nodeEnv: config.nodeEnv
     });
   });
