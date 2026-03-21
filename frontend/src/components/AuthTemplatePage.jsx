@@ -218,10 +218,7 @@ export default function AuthTemplatePage({
 
           <Link className="authx-brand" to="/">
             <div className="authx-brand-mark">
-              <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 15L9 3L15 15" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M5.5 10.5H12.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
+              <img className="authx-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
             </div>
             <span className="authx-brand-name">DoFirst</span>
           </Link>
@@ -286,10 +283,7 @@ export default function AuthTemplatePage({
 
           <Link className="authx-mobile-brand" to="/">
             <div className="authx-mobile-brand-mark">
-              <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 15L9 3L15 15" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M5.5 10.5H12.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
+              <img className="authx-mobile-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
             </div>
             <span className="authx-mobile-brand-name">DoFirst</span>
           </Link>

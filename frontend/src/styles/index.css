@@ -148,6 +148,9 @@ button {
 }
 
 .nav-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-family: var(--serif);
   font-size: 1.3rem;
   font-weight: 700;
@@ -156,7 +159,20 @@ button {
   text-decoration: none;
 }
 
-.nav-logo span {
+.nav-logo-image {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid rgba(200, 255, 0, 0.32);
+  background: #0f0f0f;
+}
+
+.nav-logo-wordmark {
+  line-height: 1;
+}
+
+.nav-logo-dot {
   color: var(--accent);
 }
 
@@ -1463,9 +1479,10 @@ main {
 }
 
 .authx-brand-mark {
-  width: 34px;
-  height: 34px;
-  background: var(--authx-text-primary);
+  width: 42px;
+  height: 42px;
+  background: #0f0f0f;
+  border: 1px solid rgba(200, 255, 0, 0.35);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -1473,9 +1490,11 @@ main {
   transition: transform 0.3s var(--authx-ease-spring);
 }
 
-.authx-brand-mark svg {
-  width: 18px;
-  height: 18px;
+.authx-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 7px;
 }
 
 .authx-brand:hover .authx-brand-mark {
@@ -1766,13 +1785,21 @@ main {
 }
 
 .authx-mobile-brand-mark {
-  width: 32px;
-  height: 32px;
-  background: var(--authx-text-primary);
+  width: 38px;
+  height: 38px;
+  background: #0f0f0f;
+  border: 1px solid rgba(200, 255, 0, 0.35);
   border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.authx-mobile-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .authx-mobile-brand-name {
