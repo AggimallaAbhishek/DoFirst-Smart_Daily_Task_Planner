@@ -18,6 +18,8 @@ function sanitize(value) {
 }
 
 function createLogger(level = 'debug') {
+  const silent = process.env.NODE_ENV === 'test';
+
   return winston.createLogger({
     level,
     format: winston.format.combine(
@@ -31,7 +33,7 @@ function createLogger(level = 'debug') {
     defaultMeta: {
       service: 'smart-daily-planner-backend'
     },
-    transports: [new winston.transports.Console()]
+    transports: [new winston.transports.Console({ silent })]
   });
 }
 

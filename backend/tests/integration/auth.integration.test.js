@@ -12,11 +12,11 @@ describe('auth routes', () => {
 
   beforeAll(async () => {
     pool = await setupTestDatabase();
-    app = createTestApp(pool);
   });
 
   beforeEach(async () => {
     await resetTestDatabase();
+    app = createTestApp(pool);
   });
 
   afterAll(async () => {

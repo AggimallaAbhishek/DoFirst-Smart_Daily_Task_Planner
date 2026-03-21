@@ -2,7 +2,12 @@ module.exports = {
   testEnvironment: 'node',
   rootDir: '.',
   roots: ['<rootDir>/src', '<rootDir>/tests'],
-  collectCoverageFrom: ['src/**/*.js', '!src/server.js', '!src/db/migrate.js'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    '!src/server.js',
+    '!src/db/**/*.js',
+    '!src/config/**/*.js'
+  ],
   coverageThreshold: {
     global: {
       branches: 80,

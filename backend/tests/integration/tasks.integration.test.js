@@ -26,11 +26,11 @@ describe('task routes', () => {
 
   beforeAll(async () => {
     pool = await setupTestDatabase();
-    app = createTestApp(pool);
   });
 
   beforeEach(async () => {
     await resetTestDatabase();
+    app = createTestApp(pool);
   });
 
   afterAll(async () => {
@@ -155,5 +155,69 @@ describe('task routes', () => {
       });
 
     expect(response.statusCode).toBe(403);
+  });
+
+  test('returns 204 when no suggested task is available', async () => {
+    const token = await registerAndLogin(app, 'owner@example.com');
+
+    const response = await request(app)
+      .get('/api/tasks/suggestion')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(204);
+  });
+
+  test('deletes a task owned by the authenticated user', async () => {
+    const token = await registerAndLogin(app, 'owner@example.com');
+
+    const taskResponse = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Delete me',
+        priority: 'low',
+        estimatedMinutes: 15
+      });
+
+    const deleteResponse = await request(app)
+      .delete(`/api/tasks/${taskResponse.body.task.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(deleteResponse.statusCode).toBe(204);
+
+    const listResponse = await request(app)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(listResponse.body.tasks).toHaveLength(0);
+  });
+
+  test('rejects invalid task payloads', async () => {
+    const token = await registerAndLogin(app, 'owner@example.com');
+
+    const response = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: '',
+        priority: 'urgent',
+        estimatedMinutes: 99
+      });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  test('rejects unauthenticated task requests', async () => {
+    const response = await request(app).get('/api/tasks');
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  test('rejects invalid bearer tokens', async () => {
+    const response = await request(app)
+      .get('/api/tasks')
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.statusCode).toBe(401);
   });
 });
