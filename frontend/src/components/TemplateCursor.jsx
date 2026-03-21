@@ -23,19 +23,47 @@ export default function TemplateCursor() {
 
     let mouseX = 0;
     let mouseY = 0;
-    let trailTimeoutId;
+    let trailX = 0;
+    let trailY = 0;
+    let hasInitialPosition = false;
+    let animationFrameId;
+
+    const TRAIL_FOLLOW_FACTOR = 0.55;
+
+    const renderFrame = () => {
+      if (!hasInitialPosition) {
+        animationFrameId = window.requestAnimationFrame(renderFrame);
+        return;
+      }
+
+      cursor.style.left = `${mouseX}px`;
+      cursor.style.top = `${mouseY}px`;
+
+      trailX += (mouseX - trailX) * TRAIL_FOLLOW_FACTOR;
+      trailY += (mouseY - trailY) * TRAIL_FOLLOW_FACTOR;
+
+      if (Math.abs(mouseX - trailX) < 0.1) {
+        trailX = mouseX;
+      }
+
+      if (Math.abs(mouseY - trailY) < 0.1) {
+        trailY = mouseY;
+      }
+
+      trail.style.left = `${trailX}px`;
+      trail.style.top = `${trailY}px`;
+      animationFrameId = window.requestAnimationFrame(renderFrame);
+    };
 
     const handleMouseMove = (event) => {
       mouseX = event.clientX;
       mouseY = event.clientY;
-      cursor.style.left = `${mouseX}px`;
-      cursor.style.top = `${mouseY}px`;
 
-      clearTimeout(trailTimeoutId);
-      trailTimeoutId = setTimeout(() => {
-        trail.style.left = `${mouseX}px`;
-        trail.style.top = `${mouseY}px`;
-      }, 70);
+      if (!hasInitialPosition) {
+        trailX = mouseX;
+        trailY = mouseY;
+        hasInitialPosition = true;
+      }
     };
 
     const handleMouseOver = (event) => {
@@ -63,9 +91,10 @@ export default function TemplateCursor() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseover', handleMouseOver);
     document.addEventListener('mouseout', handleMouseOut);
+    animationFrameId = window.requestAnimationFrame(renderFrame);
 
     return () => {
-      clearTimeout(trailTimeoutId);
+      window.cancelAnimationFrame(animationFrameId);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
