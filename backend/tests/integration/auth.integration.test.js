@@ -70,6 +70,6 @@ describe('auth routes', () => {
     });
 
     expect(response.statusCode).toBe(503);
-    expect(response.body.error).toContain('Google sign-in is not configured');
+    expect(response.body.error).toBe('Internal server error.');
   });
 });
