@@ -19,6 +19,8 @@ function toAllowedOrigins(value, fallbackOrigin) {
 function resolveConfig(source = process.env) {
   const nodeEnv = source.NODE_ENV || 'development';
   const isProduction = nodeEnv === 'production';
+  const defaultFrontendOrigin = source.FRONTEND_ORIGIN || 'http://localhost:5173';
+  const defaultAllowedOrigins = [defaultFrontendOrigin, 'http://127.0.0.1:5173'].join(',');
 
   const config = {
     nodeEnv,
@@ -28,8 +30,8 @@ function resolveConfig(source = process.env) {
       source.DATABASE_URL || 'postgresql://planner:planner@localhost:5433/smart_daily_planner',
     jwtSecret: source.JWT_SECRET || (isProduction ? '' : 'change-me'),
     jwtExpiresIn: source.JWT_EXPIRES_IN || '24h',
-    frontendOrigin: source.FRONTEND_ORIGIN || 'http://localhost:5173',
-    allowedOrigins: toAllowedOrigins(source.ALLOWED_ORIGINS, source.FRONTEND_ORIGIN),
+    frontendOrigin: defaultFrontendOrigin,
+    allowedOrigins: toAllowedOrigins(source.ALLOWED_ORIGINS, defaultAllowedOrigins),
     logLevel: source.LOG_LEVEL || 'debug',
     authRateLimitMax: parseInteger(source.AUTH_RATE_LIMIT_MAX, 5),
     apiRateLimitMax: parseInteger(source.API_RATE_LIMIT_MAX, 100),
