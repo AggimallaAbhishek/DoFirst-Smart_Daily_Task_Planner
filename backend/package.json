@@ -9,6 +9,8 @@
     "build": "node -e \"console.log('Backend build uses Docker packaging.')\"",
     "lint": "eslint \"src/**/*.js\" \"tests/**/*.js\"",
     "test": "jest --runInBand --coverage",
+    "test:unit": "jest --runInBand --coverage=false tests/unit",
+    "test:integration": "jest --runInBand --coverage=false tests/integration",
     "test:watch": "jest --watch",
     "db:migrate": "node src/db/migrate.js"
   },

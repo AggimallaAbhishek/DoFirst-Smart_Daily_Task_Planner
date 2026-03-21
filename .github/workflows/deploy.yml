@@ -42,15 +42,26 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build frontend
+      - name: Pull Vercel project settings
         env:
-          VITE_API_URL: ${{ vars.PRODUCTION_API_URL }}
-        run: npm run build --workspace frontend
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: npx vercel pull --cwd frontend --yes --environment=${{ github.ref_name == 'main' && 'production' || 'preview' }} --token "$VERCEL_TOKEN"
+
+      - name: Build frontend for Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: npx vercel build --cwd frontend --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: npx vercel deploy --cwd frontend --prebuilt ${{ github.ref_name == 'main' && '--prod' || '' }} --token "$VERCEL_TOKEN"
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: npx vercel deploy --cwd frontend --prebuilt --yes ${{ github.ref_name == 'main' && '--prod' || '' }} --token "$VERCEL_TOKEN"
 
       - name: Smoke check frontend
         if: ${{ vars.SMOKE_TEST_URL != '' }}
