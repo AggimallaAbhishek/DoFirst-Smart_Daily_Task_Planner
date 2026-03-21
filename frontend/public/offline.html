@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DoFirst Offline</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        background: radial-gradient(circle at top, #1f1f1f 0%, #0c0c0c 65%);
+        color: #f0ede6;
+        padding: 24px;
+      }
+
+      .card {
+        width: min(520px, 100%);
+        border: 1px solid #2f2f2f;
+        background: rgba(17, 17, 17, 0.9);
+        padding: 24px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 20px;
+        letter-spacing: 0.02em;
+      }
+
+      p {
+        margin: 0;
+        color: #bab8b1;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      button {
+        margin-top: 16px;
+        border: 1px solid #c8ff00;
+        background: transparent;
+        color: #c8ff00;
+        font: inherit;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <article class="card">
+      <h1>You're offline</h1>
+      <p>DoFirst is unavailable right now. Reconnect to sync your latest tasks and suggestions.</p>
+      <button type="button" onclick="window.location.reload()">Try again</button>
+    </article>
+  </body>
+</html>

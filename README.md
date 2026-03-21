@@ -87,3 +87,18 @@ In Google Cloud Console for your OAuth client:
 
 - Backend uses `backend/vercel.json` and serves all routes through `backend/api/index.js`.
 - Frontend uses `frontend/vercel.json` with SPA rewrite and security headers.
+
+## PWA support
+
+The frontend is configured as an installable PWA with:
+
+- Web app manifest: `frontend/public/manifest.webmanifest`
+- Service worker: `frontend/public/sw.js`
+- Offline fallback page: `frontend/public/offline.html`
+- App icons: `frontend/public/icons/`
+
+Install flow behavior:
+
+- Android/Desktop Chromium browsers: `Install App` button triggers the native install prompt.
+- iOS Safari: button shows `Add to Home Screen` guidance.
+- After installation, the install button hides and a success state is shown.

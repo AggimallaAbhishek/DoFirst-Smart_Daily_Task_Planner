@@ -203,6 +203,79 @@ button {
   gap: 0.9rem;
 }
 
+.install-app-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.install-app-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #95d600;
+  background: linear-gradient(90deg, rgba(200, 255, 0, 0.16), rgba(200, 255, 0, 0.05));
+  color: #d8ff6f;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.52rem 1.1rem;
+  transition: transform 0.2s, background 0.25s, box-shadow 0.25s, border-color 0.25s;
+}
+
+.install-app-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+  background: linear-gradient(90deg, rgba(200, 255, 0, 0.24), rgba(200, 255, 0, 0.1));
+  box-shadow: 0 8px 22px rgba(200, 255, 0, 0.1);
+}
+
+.install-app-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.install-app-feedback {
+  max-width: 270px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: right;
+  border: 1px solid var(--border);
+  background: rgba(14, 14, 14, 0.86);
+  padding: 0.35rem 0.5rem;
+  animation: fadeUp 0.28s var(--ease-out);
+}
+
+.install-app-feedback.success {
+  color: #d9ff73;
+  border-color: rgba(200, 255, 0, 0.5);
+}
+
+.install-app-feedback.ios {
+  color: #f0ede6;
+  border-color: rgba(240, 237, 230, 0.35);
+}
+
+.install-app-dismiss {
+  margin-left: 0.6rem;
+  border: 1px solid #4d4d4d;
+  background: transparent;
+  color: #ddd8ce;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.35rem;
+}
+
 .nav-user-card {
   display: inline-flex;
   align-items: center;
@@ -1219,6 +1292,15 @@ main {
 
   .nav-user-card {
     padding: 0.28rem 0.4rem;
+  }
+
+  .install-app-wrapper {
+    align-items: flex-start;
+  }
+
+  .install-app-feedback {
+    text-align: left;
+    max-width: 220px;
   }
 
   .nav-user-name {

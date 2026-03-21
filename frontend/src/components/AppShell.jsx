@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import InstallAppButton from './InstallAppButton';
 import { formatTodayLabel } from '../lib/formatters';
 
 export default function AppShell({ user, onLogout, children }) {
@@ -50,6 +51,7 @@ export default function AppShell({ user, onLogout, children }) {
           </li>
         </ul>
         <div className="nav-right">
+          <InstallAppButton />
           <div className="nav-user-card">
             {user?.avatarUrl ? (
               <img className="nav-user-avatar" src={user.avatarUrl} alt={`${userLabel} avatar`} referrerPolicy="no-referrer" />
