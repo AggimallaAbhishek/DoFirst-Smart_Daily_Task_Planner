@@ -29,7 +29,7 @@ function createCorsOptions(config) {
 }
 
 function createHealthHandler({ pool, startedAt }) {
-  return async (request, response, next) => {
+  return async (request, response) => {
     try {
       await pool.query('SELECT 1');
 
@@ -40,11 +40,12 @@ function createHealthHandler({ pool, startedAt }) {
         version: process.env.npm_package_version || '1.0.0'
       });
     } catch (error) {
-      error.statusCode = 503;
-      error.details = {
-        database: 'unavailable'
-      };
-      return next(error);
+      return response.status(503).json({
+        status: 'degraded',
+        uptimeMs: Date.now() - startedAt,
+        database: 'unavailable',
+        version: process.env.npm_package_version || '1.0.0'
+      });
     }
   };
 }

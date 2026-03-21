@@ -28,6 +28,7 @@ describe('health route', () => {
     const response = await request(app).get('/health');
 
     expect(response.statusCode).toBe(503);
-    expect(response.body.error).toBe('Internal server error.');
+    expect(response.body.database).toBe('unavailable');
+    expect(response.body.status).toBe('degraded');
   });
 });

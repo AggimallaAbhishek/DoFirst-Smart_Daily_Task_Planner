@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    if: ${{ vars.RENDER_HEALTHCHECK_URL != '' && secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+    steps:
+      - name: Trigger Render deploy
+        run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Wait for backend health check
+        run: |
+          for attempt in 1 2 3; do
+            if curl -fsSL "${{ vars.RENDER_HEALTHCHECK_URL }}"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: ${{ secrets.VERCEL_TOKEN != '' && vars.VERCEL_PROJECT_ID != '' && vars.VERCEL_ORG_ID != '' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build frontend
+        env:
+          VITE_API_URL: ${{ vars.PRODUCTION_API_URL }}
+        run: npm run build --workspace frontend
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --cwd frontend --prebuilt ${{ github.ref_name == 'main' && '--prod' || '' }} --token "$VERCEL_TOKEN"
+
+      - name: Smoke check frontend
+        if: ${{ vars.SMOKE_TEST_URL != '' }}
+        run: curl -fsSL "${{ vars.SMOKE_TEST_URL }}"
