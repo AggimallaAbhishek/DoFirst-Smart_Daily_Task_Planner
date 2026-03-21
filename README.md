@@ -20,5 +20,5 @@ Smart Daily Planner is a security-first daily task planner built as a monorepo w
 5. Start both apps: `npm run dev`
 
 Frontend runs on `http://localhost:5173`.
-Backend runs on `http://localhost:3001`.
+Backend runs on `http://localhost:4301`.
 The local Dockerized PostgreSQL instance is exposed on `localhost:5433` to avoid conflicts with an existing host database.

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getStoredSession } from '../lib/session';
 
 const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4301',
   timeout: 10000
 });
 
