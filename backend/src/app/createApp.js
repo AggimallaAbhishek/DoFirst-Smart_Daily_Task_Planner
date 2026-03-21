@@ -104,6 +104,13 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
   app.use(requestLogger(logger));
   app.use('/api', rateLimiters.apiRateLimiter);
 
+  app.get('/', (request, response) =>
+    response.status(200).json({
+      service: 'smart-daily-planner-backend',
+      status: 'ok',
+      health: '/health'
+    })
+  );
   app.get('/health', createHealthHandler({ pool, startedAt }));
   app.use(
     '/api/auth',
