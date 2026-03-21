@@ -159,10 +159,6 @@ export default function AuthTemplatePage({
     const nextErrors = {};
     const normalizedEmail = form.email.trim();
 
-    if (isSignup && !form.fullName.trim()) {
-      nextErrors.fullName = true;
-    }
-
     if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
       nextErrors.email = true;
     }
@@ -353,7 +349,6 @@ export default function AuthTemplatePage({
                     id="authx-fullname"
                     onChange={(event) => updateField('fullName', event.target.value)}
                     placeholder="Jane Doe"
-                    required={isSignup}
                     type="text"
                     value={form.fullName}
                   />
@@ -393,7 +388,7 @@ export default function AuthTemplatePage({
                     value={form.password}
                   />
                   <button
-                    aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+                    aria-label={passwordVisible ? 'Hide characters' : 'Show characters'}
                     className="authx-pw-toggle"
                     onClick={() => setPasswordVisible((current) => !current)}
                     type="button"
