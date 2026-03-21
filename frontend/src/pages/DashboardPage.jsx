@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AppShell from '../components/AppShell';
+import DashboardToolbar from '../components/DashboardToolbar';
 import ProgressSummary from '../components/ProgressSummary';
 import SuggestionBanner from '../components/SuggestionBanner';
 import TaskForm from '../components/TaskForm';
@@ -13,20 +14,126 @@ import {
   updateTask
 } from '../features/tasks/taskService';
 import { getApiErrorMessage } from '../lib/apiError';
+import { getTodayDateKey, shiftDate } from '../lib/datePlanner';
+import {
+  computeProductivityScore,
+  getCurrentStreak,
+  persistDailyProductivity
+} from '../lib/productivity';
+
+const TASK_ORDER_STORAGE_PREFIX = 'smart-daily-planner-order-';
+
+function getOrderStorageKey(taskDate) {
+  return `${TASK_ORDER_STORAGE_PREFIX}${taskDate}`;
+}
+
+function readStoredTaskOrder(taskDate) {
+  try {
+    const raw = window.sessionStorage.getItem(getOrderStorageKey(taskDate));
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredTaskOrder(taskDate, order) {
+  window.sessionStorage.setItem(getOrderStorageKey(taskDate), JSON.stringify(order));
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(getTodayDateKey);
   const [tasks, setTasks] = useState([]);
   const [suggestion, setSuggestion] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [manualOrder, setManualOrder] = useState([]);
+  const [streakCount, setStreakCount] = useState(0);
   const [error, setError] = useState('');
 
-  async function loadDashboard() {
-    const [loadedTasks, loadedSuggestion] = await Promise.all([getTasks(), getSuggestion()]);
+  async function loadDashboard(taskDate) {
+    const [loadedTasks, loadedSuggestion] = await Promise.all([getTasks(taskDate), getSuggestion(taskDate)]);
     setTasks(loadedTasks);
     setSuggestion(loadedSuggestion);
   }
+
+  useEffect(() => {
+    setManualOrder(readStoredTaskOrder(selectedDate));
+    setSearchValue('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setFocusMode(false);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (tasks.length === 0) {
+      setManualOrder([]);
+      saveStoredTaskOrder(selectedDate, []);
+      return;
+    }
+
+    setManualOrder((current) => {
+      const taskIds = tasks.map((task) => task.id);
+      const filteredCurrent = current.filter((taskId) => taskIds.includes(taskId));
+      const missing = taskIds.filter((taskId) => !filteredCurrent.includes(taskId));
+      const merged = [...filteredCurrent, ...missing];
+      saveStoredTaskOrder(selectedDate, merged);
+      return merged;
+    });
+  }, [tasks, selectedDate]);
+
+  const orderedTasks = useMemo(() => {
+    if (!tasks.length) {
+      return [];
+    }
+
+    const byId = new Map(tasks.map((task) => [task.id, task]));
+    const ordered = manualOrder.map((taskId) => byId.get(taskId)).filter(Boolean);
+    const missing = tasks.filter((task) => !manualOrder.includes(task.id));
+
+    return [...ordered, ...missing];
+  }, [tasks, manualOrder]);
+
+  const filteredTasks = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase();
+
+    return orderedTasks.filter((task) => {
+      if (focusMode && (task.isCompleted || task.priority === 'low')) {
+        return false;
+      }
+
+      if (statusFilter === 'pending' && task.isCompleted) {
+        return false;
+      }
+
+      if (statusFilter === 'completed' && !task.isCompleted) {
+        return false;
+      }
+
+      if (priorityFilter !== 'all' && task.priority !== priorityFilter) {
+        return false;
+      }
+
+      if (normalizedSearch && !task.title.toLowerCase().includes(normalizedSearch)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [focusMode, orderedTasks, priorityFilter, searchValue, statusFilter]);
+
+  const hasActiveFilters = focusMode || searchValue.trim() || statusFilter !== 'all' || priorityFilter !== 'all';
+  const pendingTasksCount = orderedTasks.filter((task) => !task.isCompleted).length;
+  const productivityScore = computeProductivityScore(orderedTasks);
+
+  useEffect(() => {
+    const history = persistDailyProductivity(selectedDate, orderedTasks);
+    setStreakCount(getCurrentStreak(history));
+  }, [orderedTasks, selectedDate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -34,7 +141,11 @@ export default function DashboardPage() {
     async function bootstrap() {
       try {
         setError('');
-        const [loadedTasks, loadedSuggestion] = await Promise.all([getTasks(), getSuggestion()]);
+        setIsLoading(true);
+        const [loadedTasks, loadedSuggestion] = await Promise.all([
+          getTasks(selectedDate),
+          getSuggestion(selectedDate)
+        ]);
 
         if (!isMounted) {
           return;
@@ -63,7 +174,61 @@ export default function DashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, [logout]);
+  }, [logout, selectedDate]);
+
+  function handleReorder(draggedTaskId, targetTaskId) {
+    setManualOrder((current) => {
+      const draft = current.length ? [...current] : orderedTasks.map((task) => task.id);
+      const sourceIndex = draft.indexOf(draggedTaskId);
+      const targetIndex = draft.indexOf(targetTaskId);
+      const byId = new Map(orderedTasks.map((task) => [task.id, task]));
+      const draggedTask = byId.get(draggedTaskId);
+      const targetTask = byId.get(targetTaskId);
+
+      if (
+        sourceIndex < 0 ||
+        targetIndex < 0 ||
+        !draggedTask ||
+        !targetTask ||
+        draggedTask.isCompleted !== targetTask.isCompleted
+      ) {
+        return current;
+      }
+
+      draft.splice(sourceIndex, 1);
+      draft.splice(targetIndex, 0, draggedTaskId);
+      saveStoredTaskOrder(selectedDate, draft);
+      return draft;
+    });
+  }
+
+  async function handleReminder() {
+    if (pendingTasksCount === 0) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setError('Browser notifications are unavailable on this device.');
+      return;
+    }
+
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission !== 'granted') {
+      setError('Notification permission denied. Enable browser notifications to get reminders.');
+      return;
+    }
+
+    const topTask = orderedTasks.find((task) => !task.isCompleted);
+    new Notification('DoFirst Reminder', {
+      body: topTask
+        ? `${pendingTasksCount} task(s) pending. Start with: ${topTask.title}`
+        : `You have ${pendingTasksCount} pending task(s).`
+    });
+  }
 
   async function handleMutation(action, fallbackMessage) {
     setError('');
@@ -71,7 +236,7 @@ export default function DashboardPage() {
 
     try {
       await action();
-      await loadDashboard();
+      await loadDashboard(selectedDate);
     } catch (mutationError) {
       if (mutationError.response?.status === 401) {
         logout();
@@ -94,12 +259,30 @@ export default function DashboardPage() {
 
   return (
     <AppShell user={user} onLogout={logout}>
+      <section className="planner-section">
+        <DashboardToolbar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          onShiftDate={(offset) => setSelectedDate((current) => shiftDate(current, offset))}
+          onJumpToToday={() => setSelectedDate(getTodayDateKey())}
+          focusMode={focusMode}
+          onToggleFocus={() => setFocusMode((current) => !current)}
+          onSendReminder={handleReminder}
+          pendingTasksCount={pendingTasksCount}
+        />
+      </section>
+
       <section className="planner-section" id="suggestion">
-        <SuggestionBanner task={suggestion} />
+        <SuggestionBanner task={suggestion} selectedDate={selectedDate} />
       </section>
 
       <section className="planner-section" id="progress">
-        <ProgressSummary tasks={tasks} />
+        <ProgressSummary
+          tasks={orderedTasks}
+          productivityScore={productivityScore}
+          streakCount={streakCount}
+          focusMode={focusMode}
+        />
       </section>
 
       {error ? (
@@ -111,8 +294,9 @@ export default function DashboardPage() {
       <section className="planner-section planner-grid">
         <div id="form">
           <TaskForm
-            taskCount={tasks.length}
+            taskCount={orderedTasks.length}
             isSubmitting={isMutating}
+            selectedDate={selectedDate}
             onSubmit={(payload) =>
               handleMutation(() => createTask(payload), 'Unable to add the task right now.')
             }
@@ -121,7 +305,7 @@ export default function DashboardPage() {
 
         <div id="tasks">
           <TaskList
-            tasks={tasks}
+            tasks={filteredTasks}
             isWorking={isMutating}
             onToggleComplete={(task) =>
               handleMutation(
@@ -132,6 +316,20 @@ export default function DashboardPage() {
             onDelete={(task) =>
               handleMutation(() => deleteTask(task.id), 'Unable to delete the task.')
             }
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            priorityFilter={priorityFilter}
+            onPriorityFilterChange={setPriorityFilter}
+            onReorder={handleReorder}
+            hasActiveFilters={Boolean(hasActiveFilters)}
+            onResetFilters={() => {
+              setFocusMode(false);
+              setSearchValue('');
+              setStatusFilter('all');
+              setPriorityFilter('all');
+            }}
           />
         </div>
       </section>

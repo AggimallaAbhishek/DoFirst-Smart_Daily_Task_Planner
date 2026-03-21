@@ -1,7 +1,9 @@
 import httpClient from '../../api/httpClient';
 
-export async function getTasks() {
-  const response = await httpClient.get('/api/tasks');
+export async function getTasks(taskDate) {
+  const response = await httpClient.get('/api/tasks', {
+    params: taskDate ? { taskDate } : undefined
+  });
   return response.data.tasks;
 }
 
@@ -19,8 +21,9 @@ export async function deleteTask(taskId) {
   await httpClient.delete(`/api/tasks/${taskId}`);
 }
 
-export async function getSuggestion() {
+export async function getSuggestion(taskDate) {
   const response = await httpClient.get('/api/tasks/suggestion', {
+    params: taskDate ? { taskDate } : undefined,
     validateStatus: (status) => (status >= 200 && status < 300) || status === 204
   });
 

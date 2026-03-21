@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { formatEstimatedMinutes } from '../lib/formatters';
 
 const priorityAccent = {
@@ -6,15 +7,40 @@ const priorityAccent = {
   low: 'task-priority-low'
 };
 
-export default function TaskList({ tasks, onToggleComplete, onDelete, isWorking }) {
+export default function TaskList({
+  tasks,
+  onToggleComplete,
+  onDelete,
+  isWorking,
+  searchValue,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  priorityFilter,
+  onPriorityFilterChange,
+  onReorder,
+  hasActiveFilters,
+  onResetFilters
+}) {
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
+
   if (tasks.length === 0) {
     return (
       <section className="panel task-list-panel task-list-empty reveal">
-        <p className="section-label">No tasks yet</p>
-        <h2 className="panel-title">Start the plan with one clear task.</h2>
+        <p className="section-label">{hasActiveFilters ? 'No matches' : 'No tasks yet'}</p>
+        <h2 className="panel-title">
+          {hasActiveFilters ? 'No task matches the current filters.' : 'Start the plan with one clear task.'}
+        </h2>
         <p className="panel-copy">
-          Keep it lean. The product is intentionally limited to five tasks per day.
+          {hasActiveFilters
+            ? 'Try adjusting search, priority, status, or focus mode to see tasks again.'
+            : 'Keep it lean. The product is intentionally limited to five tasks per day.'}
         </p>
+        {hasActiveFilters ? (
+          <button className="task-filter-reset" onClick={onResetFilters} type="button">
+            Clear filters
+          </button>
+        ) : null}
       </section>
     );
   }
@@ -23,18 +49,71 @@ export default function TaskList({ tasks, onToggleComplete, onDelete, isWorking 
     <section className="panel task-list-panel reveal">
       <div className="task-list-header">
         <div>
-          <p className="section-label">Today&apos;s board</p>
+          <p className="section-label">Planned board</p>
           <h2 className="panel-title">Prioritized checklist</h2>
         </div>
         <p className="panel-copy">Incomplete tasks always stay above completed ones.</p>
+      </div>
+
+      <div className="task-filter-grid">
+        <label className="task-filter-field">
+          <span className="form-label">Search</span>
+          <input
+            className="form-input"
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search by title..."
+            type="search"
+            value={searchValue}
+          />
+        </label>
+
+        <label className="task-filter-field">
+          <span className="form-label">Status</span>
+          <select
+            className="form-select form-input"
+            onChange={(event) => onStatusFilterChange(event.target.value)}
+            value={statusFilter}
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+
+        <label className="task-filter-field">
+          <span className="form-label">Priority filter</span>
+          <select
+            className="form-select form-input"
+            aria-label="Priority filter"
+            onChange={(event) => onPriorityFilterChange(event.target.value)}
+            value={priorityFilter}
+          >
+            <option value="all">All</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
       </div>
 
       <div className="task-list">
         {tasks.map((task) => (
           <article
             key={task.id}
-            className={`task-item ${task.isCompleted ? 'completed' : ''}`}
+            className={`task-item ${task.isCompleted ? 'completed' : ''} ${draggingTaskId === task.id ? 'dragging' : ''}`}
             data-testid="task-item"
+            draggable={!isWorking}
+            onDragEnd={() => setDraggingTaskId(null)}
+            onDragOver={(event) => event.preventDefault()}
+            onDragStart={() => setDraggingTaskId(task.id)}
+            onDrop={() => {
+              if (!draggingTaskId || draggingTaskId === task.id) {
+                return;
+              }
+
+              onReorder(draggingTaskId, task.id);
+              setDraggingTaskId(null);
+            }}
           >
             <div className={`task-priority ${priorityAccent[task.priority]}`} aria-hidden="true" />
 
@@ -48,7 +127,8 @@ export default function TaskList({ tasks, onToggleComplete, onDelete, isWorking 
                 </span>
               </div>
               <p className="panel-copy">
-                {formatEstimatedMinutes(task.estimatedMinutes)} · {task.isCompleted ? 'Completed' : 'Pending'}
+                {formatEstimatedMinutes(task.estimatedMinutes)} · Due {task.taskDate} ·{' '}
+                {task.isCompleted ? 'Completed' : 'Pending'}
               </p>
             </div>
 

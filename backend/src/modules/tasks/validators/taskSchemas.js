@@ -5,6 +5,7 @@ const title = Joi.string().trim().max(255).min(1);
 const priority = Joi.string().valid('high', 'medium', 'low');
 const estimatedMinutes = Joi.number().integer().valid(15, 30, 60);
 const taskDate = Joi.date().iso();
+const taskDateQuery = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/);
 
 const createTaskSchema = Joi.object({
   body: Joi.object({
@@ -43,7 +44,9 @@ const taskIdSchema = Joi.object({
 const todayTasksSchema = Joi.object({
   body: Joi.object({}).unknown(false),
   params: Joi.object({}).unknown(false),
-  query: Joi.object({}).unknown(false)
+  query: Joi.object({
+    taskDate: taskDateQuery
+  }).unknown(false)
 });
 
 module.exports = {

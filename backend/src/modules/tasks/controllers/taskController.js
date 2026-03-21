@@ -2,7 +2,7 @@ const { asyncHandler } = require('../../../utils/asyncHandler');
 
 function createTaskController({ taskService }) {
   const listTodayTasks = asyncHandler(async (request, response) => {
-    const tasks = await taskService.listTodayTasks(request.user.id);
+    const tasks = await taskService.listTodayTasks(request.user.id, request.query?.taskDate);
 
     return response.status(200).json({
       tasks
@@ -32,7 +32,7 @@ function createTaskController({ taskService }) {
   });
 
   const getSuggestion = asyncHandler(async (request, response) => {
-    const task = await taskService.getSuggestionForUser(request.user.id);
+    const task = await taskService.getSuggestionForUser(request.user.id, request.query?.taskDate);
 
     if (!task) {
       return response.status(204).send();

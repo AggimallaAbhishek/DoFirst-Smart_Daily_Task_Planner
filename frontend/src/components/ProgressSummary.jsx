@@ -1,6 +1,6 @@
 import { formatEstimatedMinutes } from '../lib/formatters';
 
-export default function ProgressSummary({ tasks }) {
+export default function ProgressSummary({ tasks, productivityScore, streakCount, focusMode }) {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((task) => task.isCompleted).length;
   const remainingMinutes = tasks
@@ -20,6 +20,14 @@ export default function ProgressSummary({ tasks }) {
     {
       label: 'Progress',
       value: `${completionRate}%`
+    },
+    {
+      label: 'Score',
+      value: `${productivityScore}%`
+    },
+    {
+      label: 'Streak',
+      value: `${streakCount} day${streakCount === 1 ? '' : 's'}`
     }
   ];
 
@@ -31,6 +39,13 @@ export default function ProgressSummary({ tasks }) {
           <p className="stat-value">{stat.value}</p>
         </div>
       ))}
+
+      {focusMode ? (
+        <div className="panel stat-card stat-focus">
+          <p className="muted-kicker">Focus Mode</p>
+          <p className="stat-value">On</p>
+        </div>
+      ) : null}
     </section>
   );
 }

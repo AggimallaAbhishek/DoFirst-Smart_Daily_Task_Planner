@@ -1,5 +1,6 @@
 const {
   createTaskSchema,
+  todayTasksSchema,
   updateTaskSchema
 } = require('../../src/modules/tasks/validators/taskSchemas');
 
@@ -28,5 +29,17 @@ describe('taskSchemas', () => {
     });
 
     expect(error).toBeDefined();
+  });
+
+  test('todayTasksSchema accepts date filters in query', () => {
+    const { error } = todayTasksSchema.validate({
+      body: {},
+      params: {},
+      query: {
+        taskDate: '2026-03-21'
+      }
+    });
+
+    expect(error).toBeUndefined();
   });
 });

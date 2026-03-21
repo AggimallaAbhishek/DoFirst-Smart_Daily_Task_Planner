@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-const initialForm = {
-  title: '',
-  priority: 'high',
-  estimatedMinutes: 30
-};
+function buildInitialForm(taskDate) {
+  return {
+    title: '',
+    priority: 'high',
+    estimatedMinutes: 30,
+    taskDate
+  };
+}
 
-export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
-  const [form, setForm] = useState(initialForm);
+export default function TaskForm({ onSubmit, taskCount, isSubmitting, selectedDate }) {
+  const [form, setForm] = useState(() => buildInitialForm(selectedDate));
   const [error, setError] = useState('');
   const limitReached = taskCount >= 5;
+
+  useEffect(() => {
+    setForm((current) => ({
+      ...current,
+      taskDate: selectedDate
+    }));
+  }, [selectedDate]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -24,21 +34,27 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
       return;
     }
 
+    if (!form.taskDate) {
+      setError('Please choose a due date for this task.');
+      return;
+    }
+
     setError('');
 
     await onSubmit({
       title: form.title.trim(),
       priority: form.priority,
-      estimatedMinutes: Number(form.estimatedMinutes)
+      estimatedMinutes: Number(form.estimatedMinutes),
+      taskDate: form.taskDate
     });
 
-    setForm(initialForm);
+    setForm(buildInitialForm(form.taskDate));
   }
 
   return (
     <section className="panel task-form-panel reveal">
       <div>
-        <p className="section-label">Plan Today</p>
+        <p className="section-label">Plan Tasks</p>
         <h2 className="panel-title">Add the next task to the board.</h2>
       </div>
 
@@ -92,13 +108,26 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
               <option value={60}>1 hr</option>
             </select>
           </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="task-date">
+              Due date
+            </label>
+            <input
+              className="form-input"
+              id="task-date"
+              onChange={(event) => setForm((current) => ({ ...current, taskDate: event.target.value }))}
+              type="date"
+              value={form.taskDate}
+            />
+          </div>
         </div>
 
         <div className="task-form-footer">
           <p className="panel-copy">
             {limitReached
               ? 'Daily limit reached. Complete or remove a task before adding another.'
-              : `${5 - taskCount} slots left for today.`}
+              : `${5 - taskCount} slots left for the selected day.`}
           </p>
           <button
             type="submit"

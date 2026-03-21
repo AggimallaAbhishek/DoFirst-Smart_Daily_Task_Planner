@@ -5,9 +5,21 @@ function currentTaskDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function normalizeTaskDate(taskDate) {
+  if (!taskDate) {
+    return currentTaskDate();
+  }
+
+  if (taskDate instanceof Date) {
+    return taskDate.toISOString().slice(0, 10);
+  }
+
+  return String(taskDate).slice(0, 10);
+}
+
 function createTaskService({ taskRepository, logger }) {
-  async function listTodayTasks(userId) {
-    const taskDate = currentTaskDate();
+  async function listTodayTasks(userId, taskDateInput) {
+    const taskDate = normalizeTaskDate(taskDateInput);
 
     logger.debug('Listing tasks for dashboard.', {
       userId,
@@ -23,7 +35,7 @@ function createTaskService({ taskRepository, logger }) {
   }
 
   async function createTaskForToday(userId, payload) {
-    const taskDate = payload.taskDate || currentTaskDate();
+    const taskDate = normalizeTaskDate(payload.taskDate);
     const existingCount = await taskRepository.countTasksForDate({
       userId,
       taskDate
@@ -95,8 +107,8 @@ function createTaskService({ taskRepository, logger }) {
     await taskRepository.deleteTask(taskId);
   }
 
-  async function getSuggestionForUser(userId) {
-    const taskDate = currentTaskDate();
+  async function getSuggestionForUser(userId, taskDateInput) {
+    const taskDate = normalizeTaskDate(taskDateInput);
 
     logger.debug('Fetching task suggestion.', {
       userId,
@@ -122,5 +134,6 @@ function createTaskService({ taskRepository, logger }) {
 
 module.exports = {
   createTaskService,
-  currentTaskDate
+  currentTaskDate,
+  normalizeTaskDate
 };

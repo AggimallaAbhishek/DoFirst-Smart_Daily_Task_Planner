@@ -106,6 +106,40 @@ describe('task routes', () => {
     expect(response.body.tasks[1].title).toBe('High task');
   });
 
+  test('filters tasks by taskDate query parameter', async () => {
+    const token = await registerAndLogin(app, 'owner@example.com');
+
+    await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Today task',
+        priority: 'medium',
+        estimatedMinutes: 30
+      });
+
+    await request(app)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        title: 'Tomorrow task',
+        priority: 'high',
+        estimatedMinutes: 15,
+        taskDate: '2026-03-22'
+      });
+
+    const response = await request(app)
+      .get('/api/tasks')
+      .query({
+        taskDate: '2026-03-22'
+      })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.tasks).toHaveLength(1);
+    expect(response.body.tasks[0].title).toBe('Tomorrow task');
+  });
+
   test('rejects a sixth task for the day', async () => {
     const token = await registerAndLogin(app, 'owner@example.com');
 
