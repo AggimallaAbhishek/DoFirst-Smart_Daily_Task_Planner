@@ -81,10 +81,10 @@ export default function TaskList({
         </label>
 
         <label className="task-filter-field">
-          <span className="form-label">Priority filter</span>
+          <span className="form-label">Level filter</span>
           <select
             className="form-select form-input"
-            aria-label="Priority filter"
+            aria-label="Level filter"
             onChange={(event) => onPriorityFilterChange(event.target.value)}
             value={priorityFilter}
           >
