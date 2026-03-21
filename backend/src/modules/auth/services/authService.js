@@ -1,8 +1,9 @@
+const crypto = require('crypto');
 const { createHttpError } = require('../../../utils/httpError');
 const { mapUser } = require('../../../utils/mappers');
 const { hashPassword, verifyPassword } = require('../../../utils/passwords');
 
-function createAuthService({ authRepository, logger }) {
+function createAuthService({ authRepository, logger, googleOAuthClient }) {
   async function register({ email, password }) {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -47,8 +48,55 @@ function createAuthService({ authRepository, logger }) {
     return mapUser(user);
   }
 
+  async function loginWithGoogle({ code }) {
+    if (!googleOAuthClient) {
+      throw createHttpError(503, 'Google sign-in is not configured for this environment.');
+    }
+
+    logger.debug('Attempting Google sign-in.');
+
+    let profile;
+    try {
+      profile = await googleOAuthClient.getProfileFromCode(code);
+    } catch (error) {
+      logger.debug('Google sign-in failed during code exchange.', {
+        reason: error.message
+      });
+      throw createHttpError(401, 'Google sign-in failed. Please try again.');
+    }
+
+    const normalizedEmail = profile.email.trim().toLowerCase();
+
+    if (!normalizedEmail || !profile.emailVerified) {
+      throw createHttpError(401, 'Google account email is not verified.');
+    }
+
+    let user = await authRepository.findUserByEmail(normalizedEmail);
+
+    if (!user) {
+      const generatedPassword = crypto.randomBytes(48).toString('hex');
+      const passwordHash = await hashPassword(generatedPassword);
+      user = await authRepository.createUser({
+        email: normalizedEmail,
+        passwordHash
+      });
+
+      logger.debug('Created a local user from Google sign-in.', {
+        email: normalizedEmail,
+        googleSubject: profile.subject
+      });
+    }
+
+    return {
+      ...mapUser(user),
+      name: profile.name || null,
+      avatarUrl: profile.picture || null
+    };
+  }
+
   return {
     login,
+    loginWithGoogle,
     register
   };
 }

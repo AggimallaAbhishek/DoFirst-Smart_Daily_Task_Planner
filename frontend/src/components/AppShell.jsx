@@ -2,6 +2,14 @@ import { useEffect } from 'react';
 import { formatTodayLabel } from '../lib/formatters';
 
 export default function AppShell({ user, onLogout, children }) {
+  const userLabel = user?.name || user?.email?.split('@')?.[0] || 'User';
+  const avatarFallback = userLabel
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
   useEffect(() => {
     const nav = document.getElementById('nav');
 
@@ -41,9 +49,22 @@ export default function AppShell({ user, onLogout, children }) {
             <a href="#tasks">Checklist</a>
           </li>
         </ul>
-        <button type="button" className="nav-cta interactive" onClick={onLogout}>
-          Logout
-        </button>
+        <div className="nav-right">
+          <div className="nav-user-card">
+            {user?.avatarUrl ? (
+              <img className="nav-user-avatar" src={user.avatarUrl} alt={`${userLabel} avatar`} referrerPolicy="no-referrer" />
+            ) : (
+              <div className="nav-user-avatar nav-user-avatar-fallback">{avatarFallback || 'U'}</div>
+            )}
+            <div className="nav-user-meta">
+              <span className="nav-user-name">{userLabel}</span>
+              <span className="nav-user-email">{user?.email}</span>
+            </div>
+          </div>
+          <button type="button" className="nav-cta interactive" onClick={onLogout}>
+            Logout
+          </button>
+        </div>
       </nav>
 
       <section className="hero" id="hero">

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthTemplatePage from '../components/AuthTemplatePage';
+import { requestGoogleAuthCode } from '../features/auth/googleOAuth';
 import { useAuth } from '../features/auth/useAuth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, getApiErrorMessage } = useAuth();
+  const { login, loginWithGoogle, getApiErrorMessage } = useAuth();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   async function handleSubmit(credentials) {
     setError('');
@@ -26,12 +28,30 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const code = await requestGoogleAuthCode({
+        clientId: googleClientId
+      });
+      await loginWithGoogle(code);
+      navigate('/', { replace: true });
+    } catch (googleError) {
+      throw new Error(getApiErrorMessage(googleError, 'Unable to sign in with Google.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <AuthTemplatePage
       mode="signin"
       error={error}
       isSubmitting={isSubmitting}
       onSubmitCredentials={handleSubmit}
+      onGoogleSignIn={handleGoogleSignIn}
       onClearError={() => setError('')}
     />
   );

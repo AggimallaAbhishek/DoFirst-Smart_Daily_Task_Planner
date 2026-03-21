@@ -38,7 +38,9 @@ function resolveConfig(source = process.env) {
     rateLimitWindowMs: parseInteger(source.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     awsRegion: source.AWS_REGION || 'ap-south-1',
     awsSecretsManagerSecretId: source.AWS_SECRETS_MANAGER_SECRET_ID || '',
-    sentryDsn: source.SENTRY_DSN || ''
+    sentryDsn: source.SENTRY_DSN || '',
+    googleOauthClientId: source.GOOGLE_OAUTH_CLIENT_ID || '',
+    googleOauthClientSecret: source.GOOGLE_OAUTH_CLIENT_SECRET || ''
   };
 
   if (!config.databaseUrl) {

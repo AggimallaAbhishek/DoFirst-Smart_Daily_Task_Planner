@@ -10,6 +10,7 @@ const { createAuthController } = require('../modules/auth/controllers/authContro
 const authRepository = require('../modules/auth/repositories/authRepository');
 const { createAuthRouter } = require('../modules/auth/routes/authRoutes');
 const { createAuthService } = require('../modules/auth/services/authService');
+const { createGoogleOAuthClient } = require('../modules/auth/services/googleOAuthClient');
 const taskRepository = require('../modules/tasks/repositories/taskRepository');
 const { createTaskController } = require('../modules/tasks/controllers/taskController');
 const { createTaskRouter } = require('../modules/tasks/routes/taskRoutes');
@@ -53,12 +54,14 @@ function createHealthHandler({ pool, startedAt }) {
 function createApp({ config, logger, pool, startedAt = Date.now() }) {
   const app = express();
   const rateLimiters = createRateLimiters(config);
+  const googleOAuthClient = createGoogleOAuthClient({ config });
   const authService = createAuthService({
     authRepository: {
       findUserByEmail: (email) => authRepository.findUserByEmail(pool, email),
       createUser: (payload) => authRepository.createUser(pool, payload)
     },
-    logger
+    logger,
+    googleOAuthClient
   });
   const taskService = createTaskService({
     taskRepository: {

@@ -7,5 +7,9 @@ export function getApiErrorMessage(error, fallbackMessage) {
     return error.response.data.details.join(', ');
   }
 
+  if (error.message) {
+    return error.message;
+  }
+
   return fallbackMessage;
 }

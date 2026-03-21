@@ -22,7 +22,14 @@ async function loadRuntimeSecrets(config, logger) {
   }
 
   const parsed = JSON.parse(response.SecretString);
-  const allowedKeys = ['DATABASE_URL', 'JWT_SECRET', 'SENTRY_DSN', 'ALLOWED_ORIGINS'];
+  const allowedKeys = [
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'SENTRY_DSN',
+    'ALLOWED_ORIGINS',
+    'GOOGLE_OAUTH_CLIENT_ID',
+    'GOOGLE_OAUTH_CLIENT_SECRET'
+  ];
 
   return Object.fromEntries(
     Object.entries(parsed).filter(([key, value]) => allowedKeys.includes(key) && value)

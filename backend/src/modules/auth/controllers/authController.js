@@ -2,6 +2,22 @@ const { asyncHandler } = require('../../../utils/asyncHandler');
 const { signAccessToken } = require('../../../utils/jwt');
 
 function createAuthController({ authService, config }) {
+  function buildAuthPayload(user) {
+    return {
+      sub: user.id,
+      email: user.email
+    };
+  }
+
+  function buildAuthResponse(user) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name || null,
+      avatarUrl: user.avatarUrl || null
+    };
+  }
+
   const register = asyncHandler(async (request, response) => {
     const user = await authService.register(request.body);
 
@@ -12,24 +28,26 @@ function createAuthController({ authService, config }) {
 
   const login = asyncHandler(async (request, response) => {
     const user = await authService.login(request.body);
-    const token = signAccessToken(
-      {
-        sub: user.id,
-        email: user.email
-      },
-      config
-    );
+    const token = signAccessToken(buildAuthPayload(user), config);
 
     return response.status(200).json({
       token,
-      user: {
-        id: user.id,
-        email: user.email
-      }
+      user: buildAuthResponse(user)
+    });
+  });
+
+  const googleLogin = asyncHandler(async (request, response) => {
+    const user = await authService.loginWithGoogle(request.body);
+    const token = signAccessToken(buildAuthPayload(user), config);
+
+    return response.status(200).json({
+      token,
+      user: buildAuthResponse(user)
     });
   });
 
   return {
+    googleLogin,
     login,
     register
   };

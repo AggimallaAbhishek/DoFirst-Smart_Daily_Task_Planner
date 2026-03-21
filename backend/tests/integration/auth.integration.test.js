@@ -63,4 +63,13 @@ describe('auth routes', () => {
 
     expect(blockedResponse.statusCode).toBe(429);
   });
+
+  test('returns configuration error when google sign-in is disabled', async () => {
+    const response = await request(app).post('/api/auth/google').send({
+      code: '4/0AdQt8qh-example-auth-code-with-sufficient-length'
+    });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.body.error).toContain('Google sign-in is not configured');
+  });
 });

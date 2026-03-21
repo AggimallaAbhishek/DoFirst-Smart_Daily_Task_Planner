@@ -2,7 +2,9 @@ function mapUser(row) {
   return {
     id: row.id,
     email: row.email,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    name: row.name || row.display_name || null,
+    avatarUrl: row.avatar_url || null
   };
 }
 

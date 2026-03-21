@@ -38,7 +38,8 @@ export default function AuthTemplatePage({
   successMessage,
   isSubmitting,
   onSubmitCredentials,
-  onClearError
+  onClearError,
+  onGoogleSignIn
 }) {
   const isSignup = mode === 'signup';
   const visualPanelRef = useRef(null);
@@ -146,11 +147,20 @@ export default function AuthTemplatePage({
       onClearError();
     }
 
-    setGoogleLoading(true);
-    window.setTimeout(() => {
-      setGoogleLoading(false);
+    if (!onGoogleSignIn) {
       setLocalError('Google sign-in is not configured yet. Please use email and password.');
-    }, 1200);
+      return;
+    }
+
+    setGoogleLoading(true);
+
+    try {
+      await onGoogleSignIn();
+    } catch (googleError) {
+      setLocalError(googleError?.message || 'Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   async function handleSubmit(event) {
