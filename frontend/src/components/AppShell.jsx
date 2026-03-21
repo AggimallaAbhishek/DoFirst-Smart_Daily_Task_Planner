@@ -62,10 +62,13 @@ export default function AppShell({ user, onLogout, children }) {
           </span>
         </h1>
         <div className="hero-sub">
-          <p className="hero-desc">
+          <div className="hero-copy-block">
+            <p className="hero-anchor-copy">Focus the day around the task that matters most.</p>
+            <p className="hero-desc">
             Plan up to five tasks, prioritize clearly, and follow the &quot;Do This First&quot; suggestion to keep
             momentum.
-          </p>
+            </p>
+          </div>
           <div className="hero-scroll">
             <div className="hero-scroll-line" />
             Scroll to manage today

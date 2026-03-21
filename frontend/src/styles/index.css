@@ -306,6 +306,17 @@ button {
   line-height: 1.9;
 }
 
+.hero-copy-block {
+  max-width: 460px;
+}
+
+.hero-anchor-copy {
+  margin: 0 0 0.45rem;
+  color: #9c9c9c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
 .hero-scroll {
   display: flex;
   align-items: center;
