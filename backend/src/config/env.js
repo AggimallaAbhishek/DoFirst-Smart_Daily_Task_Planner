@@ -25,7 +25,7 @@ function resolveConfig(source = process.env) {
     isProduction,
     port: parseInteger(source.PORT, 3000),
     databaseUrl:
-      source.DATABASE_URL || 'postgresql://planner:planner@localhost:5432/smart_daily_planner',
+      source.DATABASE_URL || 'postgresql://planner:planner@localhost:5433/smart_daily_planner',
     jwtSecret: source.JWT_SECRET || (isProduction ? '' : 'change-me'),
     jwtExpiresIn: source.JWT_EXPIRES_IN || '24h',
     frontendOrigin: source.FRONTEND_ORIGIN || 'http://localhost:5173',

@@ -13,7 +13,7 @@ function createTestConfig() {
     DATABASE_URL:
       process.env.TEST_DATABASE_URL ||
       process.env.DATABASE_URL ||
-      'postgresql://planner:planner@localhost:5432/smart_daily_planner',
+      'postgresql://planner:planner@localhost:5433/smart_daily_planner',
     JWT_SECRET: process.env.JWT_SECRET || 'test-secret'
   });
 }
