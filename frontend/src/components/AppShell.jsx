@@ -34,7 +34,7 @@ export default function AppShell({ user, onLogout, children }) {
     <div className="planner-page">
       <nav className="planner-nav" id="nav">
         <a href="#hero" className="nav-logo">
-          <img src="/DoFirst.png" alt="DoFirst logo" className="nav-logo-image" />
+          <img src="/Dofirst_1.png" alt="DoFirst logo" className="nav-logo-image" />
           <span className="nav-logo-wordmark">
             DoFirst<span className="nav-logo-dot">.</span>
           </span>
