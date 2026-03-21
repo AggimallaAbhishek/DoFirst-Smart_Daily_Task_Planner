@@ -52,7 +52,7 @@ export default function AuthForm({
         className="form-submit interactive auth-submit"
       >
         {isSubmitting ? 'Working...' : submitLabel}
-        <span className="form-submit-arrow">→</span>
+        <span aria-hidden="true" className="form-submit-arrow">→</span>
       </button>
     </form>
   );

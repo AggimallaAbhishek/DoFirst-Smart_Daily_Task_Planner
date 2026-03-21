@@ -106,7 +106,7 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
             className="form-submit interactive"
           >
             {isSubmitting ? 'Adding...' : 'Add task'}
-            <span className="form-submit-arrow">→</span>
+            <span aria-hidden="true" className="form-submit-arrow">→</span>
           </button>
         </div>
 

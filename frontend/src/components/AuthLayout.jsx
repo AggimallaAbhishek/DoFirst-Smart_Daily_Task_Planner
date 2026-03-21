@@ -12,15 +12,15 @@ export default function AuthLayout({
   return (
     <div className="auth-page">
       <nav className="planner-nav auth-nav">
-        <a href="/" className="nav-logo">
+        <Link className="nav-logo" to="/">
           DoFirst<span>.</span>
-        </a>
+        </Link>
       </nav>
       <div className="auth-grid">
         <section className="auth-hero">
           <div>
             <span className="hero-eyebrow auth-eyebrow">
-                {eyebrow}
+              {eyebrow}
             </span>
             <h1 className="hero-headline auth-headline">
               <span className="line">

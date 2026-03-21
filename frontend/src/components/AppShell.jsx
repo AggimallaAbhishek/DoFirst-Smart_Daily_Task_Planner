@@ -54,7 +54,7 @@ export default function AppShell({ user, onLogout, children }) {
           </span>
           <span className="line">
             <span>
-              around the <em className="accent-italic">one task</em>
+              around the <em className="accent-italic">task</em>
             </span>
           </span>
           <span className="line">
