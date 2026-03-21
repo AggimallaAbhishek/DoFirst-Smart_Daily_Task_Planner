@@ -10,9 +10,9 @@ export default function AuthForm({
   dataTestId
 }) {
   return (
-    <form className="space-y-5" onSubmit={onSubmit} data-testid={dataTestId}>
-      <div className="space-y-2">
-        <label className="font-display text-xs uppercase tracking-[0.3em] text-ink/60" htmlFor={`${dataTestId}-email`}>
+    <form className="task-form auth-form" onSubmit={onSubmit} data-testid={dataTestId}>
+      <div className="form-group">
+        <label className="form-label" htmlFor={`${dataTestId}-email`}>
           Email
         </label>
         <input
@@ -22,12 +22,12 @@ export default function AuthForm({
           onChange={(event) => onEmailChange(event.target.value)}
           autoComplete="email"
           required
-          className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 font-body text-base outline-none transition focus:border-ember focus:ring-2 focus:ring-ember/20"
+          className="form-input"
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="font-display text-xs uppercase tracking-[0.3em] text-ink/60" htmlFor={`${dataTestId}-password`}>
+      <div className="form-group">
+        <label className="form-label" htmlFor={`${dataTestId}-password`}>
           Password
         </label>
         <input
@@ -38,22 +38,21 @@ export default function AuthForm({
           autoComplete="current-password"
           required
           minLength={8}
-          className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 font-body text-base outline-none transition focus:border-ember focus:ring-2 focus:ring-ember/20"
+          className="form-input"
         />
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 font-body text-sm text-ember">
-          {error}
-        </div>
+        <div className="status-banner status-error">{error}</div>
       ) : null}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-full bg-ember px-5 py-3 font-display text-xs uppercase tracking-[0.35em] text-white transition hover:bg-ember/90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="form-submit interactive auth-submit"
       >
         {isSubmitting ? 'Working...' : submitLabel}
+        <span className="form-submit-arrow">→</span>
       </button>
     </form>
   );

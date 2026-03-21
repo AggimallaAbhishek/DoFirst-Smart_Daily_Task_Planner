@@ -6,10 +6,8 @@ export function ProtectedRoute({ children }) {
 
   if (isBootstrapping) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-parchment px-6">
-        <div className="rounded-full border border-ink/15 bg-white/70 px-5 py-3 font-display text-sm uppercase tracking-[0.35em] text-ink/70">
-          Loading planner
-        </div>
+      <div className="loading-screen">
+        <div className="loading-pill">Loading planner</div>
       </div>
     );
   }

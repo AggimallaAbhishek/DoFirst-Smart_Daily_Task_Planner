@@ -24,14 +24,11 @@ export default function ProgressSummary({ tasks }) {
   ];
 
   return (
-    <section className="grid gap-4 sm:grid-cols-3">
+    <section className="progress-grid">
       {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="rounded-[1.75rem] border border-white/60 bg-white/70 p-5 shadow-card backdrop-blur"
-        >
-          <p className="font-display text-xs uppercase tracking-[0.3em] text-ink/55">{stat.label}</p>
-          <p className="mt-3 font-display text-3xl font-semibold text-ink">{stat.value}</p>
+        <div key={stat.label} className="panel stat-card">
+          <p className="muted-kicker">{stat.label}</p>
+          <p className="stat-value">{stat.value}</p>
         </div>
       ))}
     </section>

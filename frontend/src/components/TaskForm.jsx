@@ -36,15 +36,15 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
   }
 
   return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/75 p-6 shadow-card backdrop-blur">
-      <div className="space-y-2">
-        <p className="font-display text-xs uppercase tracking-[0.35em] text-slate">Plan Today</p>
-        <h2 className="font-display text-3xl font-semibold">Add the next task to the board.</h2>
+    <section className="panel task-form-panel reveal">
+      <div>
+        <p className="section-label">Plan Today</p>
+        <h2 className="panel-title">Add the next task to the board.</h2>
       </div>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit} data-testid="task-form">
-        <div className="space-y-2">
-          <label className="font-display text-xs uppercase tracking-[0.3em] text-ink/60" htmlFor="task-title">
+      <form className="task-form" onSubmit={handleSubmit} data-testid="task-form">
+        <div className="form-group">
+          <label className="form-label" htmlFor="task-title">
             Task title
           </label>
           <input
@@ -53,21 +53,21 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
             onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
             maxLength={255}
             required
-            className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 font-body text-base outline-none transition focus:border-ember focus:ring-2 focus:ring-ember/20"
+            className="form-input"
             placeholder="Write proposal, revise slides, call teammate..."
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="font-display text-xs uppercase tracking-[0.3em] text-ink/60" htmlFor="task-priority">
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label" htmlFor="task-priority">
               Priority
             </label>
             <select
               id="task-priority"
               value={form.priority}
               onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
-              className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 font-body text-base outline-none transition focus:border-ember focus:ring-2 focus:ring-ember/20"
+              className="form-select form-input"
             >
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -75,8 +75,8 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
             </select>
           </div>
 
-          <div className="space-y-2">
-            <label className="font-display text-xs uppercase tracking-[0.3em] text-ink/60" htmlFor="task-estimate">
+          <div className="form-group">
+            <label className="form-label" htmlFor="task-estimate">
               Estimated time
             </label>
             <select
@@ -85,7 +85,7 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
               onChange={(event) =>
                 setForm((current) => ({ ...current, estimatedMinutes: Number(event.target.value) }))
               }
-              className="w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 font-body text-base outline-none transition focus:border-ember focus:ring-2 focus:ring-ember/20"
+              className="form-select form-input"
             >
               <option value={15}>15 min</option>
               <option value={30}>30 min</option>
@@ -94,8 +94,8 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-body text-sm text-ink/65">
+        <div className="task-form-footer">
+          <p className="panel-copy">
             {limitReached
               ? 'Daily limit reached. Complete or remove a task before adding another.'
               : `${5 - taskCount} slots left for today.`}
@@ -103,16 +103,15 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting }) {
           <button
             type="submit"
             disabled={isSubmitting || limitReached}
-            className="rounded-full bg-moss px-6 py-3 font-display text-xs uppercase tracking-[0.35em] text-white transition hover:bg-moss/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="form-submit interactive"
           >
             {isSubmitting ? 'Adding...' : 'Add task'}
+            <span className="form-submit-arrow">→</span>
           </button>
         </div>
 
         {error ? (
-          <div className="rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 font-body text-sm text-ember">
-            {error}
-          </div>
+          <div className="status-banner status-error">{error}</div>
         ) : null}
       </form>
     </section>
