@@ -25,7 +25,7 @@ function resolveConfig(source = process.env) {
   const config = {
     nodeEnv,
     isProduction,
-    port: parseInteger(source.PORT, 3000),
+    port: parseInteger(source.PORT, 3001),
     databaseUrl:
       source.DATABASE_URL || 'postgresql://planner:planner@localhost:5433/smart_daily_planner',
     jwtSecret: source.JWT_SECRET || (isProduction ? '' : 'change-me'),
