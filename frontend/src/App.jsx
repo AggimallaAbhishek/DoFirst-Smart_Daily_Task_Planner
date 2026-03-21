@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import TemplateCursor from './components/TemplateCursor';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './features/auth/useAuth';
 import DashboardPage from './pages/DashboardPage';
@@ -32,5 +33,10 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <TemplateCursor />
+      <AppRoutes />
+    </>
+  );
 }

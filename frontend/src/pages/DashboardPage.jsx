@@ -86,27 +86,30 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-planner-texture px-6 text-ink">
-        <div className="rounded-full border border-white/60 bg-white/80 px-5 py-3 font-display text-xs uppercase tracking-[0.35em] shadow-card">
-          Building today&apos;s board
-        </div>
+      <div className="loading-screen">
+        <div className="loading-pill">Building today&apos;s board</div>
       </div>
     );
   }
 
   return (
     <AppShell user={user} onLogout={logout}>
-      <div className="grid gap-6">
+      <section className="planner-section" id="suggestion">
         <SuggestionBanner task={suggestion} />
+      </section>
+
+      <section className="planner-section" id="progress">
         <ProgressSummary tasks={tasks} />
+      </section>
 
-        {error ? (
-          <div className="rounded-[1.75rem] border border-ember/20 bg-ember/10 px-5 py-4 font-body text-sm text-ember">
-            {error}
-          </div>
-        ) : null}
+      {error ? (
+        <section className="planner-section">
+          <div className="status-banner status-error">{error}</div>
+        </section>
+      ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <section className="planner-section planner-grid">
+        <div id="form">
           <TaskForm
             taskCount={tasks.length}
             isSubmitting={isMutating}
@@ -114,7 +117,9 @@ export default function DashboardPage() {
               handleMutation(() => createTask(payload), 'Unable to add the task right now.')
             }
           />
+        </div>
 
+        <div id="tasks">
           <TaskList
             tasks={tasks}
             isWorking={isMutating}
@@ -129,7 +134,7 @@ export default function DashboardPage() {
             }
           />
         </div>
-      </div>
+      </section>
     </AppShell>
   );
 }

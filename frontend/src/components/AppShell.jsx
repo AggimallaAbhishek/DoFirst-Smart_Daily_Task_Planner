@@ -1,52 +1,117 @@
+import { useEffect } from 'react';
 import { formatTodayLabel } from '../lib/formatters';
 
 export default function AppShell({ user, onLogout, children }) {
+  useEffect(() => {
+    const nav = document.getElementById('nav');
+
+    if (!nav) {
+      return undefined;
+    }
+
+    const handleScroll = () => {
+      nav.classList.toggle('scrolled', window.scrollY > 80);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-planner-texture text-ink">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <header className="rounded-[2rem] border border-white/50 bg-white/70 p-6 shadow-card backdrop-blur">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-3">
-              <span className="inline-flex rounded-full border border-ink/15 bg-parchment px-4 py-1 font-display text-xs uppercase tracking-[0.35em] text-ink/70">
-                Smart Daily Planner
-              </span>
-              <div className="space-y-2">
-                <h1 className="font-display text-4xl font-semibold leading-tight sm:text-5xl">
-                  Focus the day around the task that matters most.
-                </h1>
-                <p className="max-w-2xl font-body text-lg text-ink/75">
-                  Plan up to five tasks, rank them clearly, and let the planner keep
-                  your next move obvious.
-                </p>
-              </div>
-            </div>
+    <div className="planner-page">
+      <nav className="planner-nav" id="nav">
+        <a href="#hero" className="nav-logo">
+          DoFirst<span>.</span>
+        </a>
+        <ul className="nav-links">
+          <li>
+            <a href="#suggestion">Focus</a>
+          </li>
+          <li>
+            <a href="#progress">Progress</a>
+          </li>
+          <li>
+            <a href="#form">Add Task</a>
+          </li>
+          <li>
+            <a href="#tasks">Checklist</a>
+          </li>
+        </ul>
+        <button type="button" className="nav-cta interactive" onClick={onLogout}>
+          Logout
+        </button>
+      </nav>
 
-            <div className="flex flex-col gap-3 rounded-[1.5rem] bg-ink px-5 py-4 text-parchment sm:min-w-72">
-              <p className="font-display text-xs uppercase tracking-[0.3em] text-parchment/60">
-                Today
-              </p>
-              <p className="font-body text-xl">{formatTodayLabel()}</p>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-display text-xs uppercase tracking-[0.3em] text-parchment/60">
-                    Signed in
-                  </p>
-                  <p className="break-all font-body text-base">{user?.email}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  className="rounded-full border border-parchment/30 px-4 py-2 font-display text-xs uppercase tracking-[0.28em] transition hover:bg-parchment hover:text-ink"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
+      <section className="hero" id="hero">
+        <div className="hero-eyebrow">Smart Daily Planner - Personal Productivity</div>
+        <h1 className="hero-headline">
+          <span className="line">
+            <span>Focus the day</span>
+          </span>
+          <span className="line">
+            <span>
+              around the <em className="accent-italic">one task</em>
+            </span>
+          </span>
+          <span className="line">
+            <span>that matters most.</span>
+          </span>
+        </h1>
+        <div className="hero-sub">
+          <p className="hero-desc">
+            Plan up to five tasks, prioritize clearly, and follow the &quot;Do This First&quot; suggestion to keep
+            momentum.
+          </p>
+          <div className="hero-scroll">
+            <div className="hero-scroll-line" />
+            Scroll to manage today
           </div>
-        </header>
+        </div>
+        <div className="hero-counter">
+          {formatTodayLabel()} - {user?.email}
+        </div>
+        <div className="hero-accent-bg" />
+      </section>
 
-        <main className="py-8">{children}</main>
+      <div className="marquee-section">
+        <div className="marquee-track">
+          <span className="marquee-item">Set Priorities</span>
+          <span className="marquee-item">Plan in Minutes</span>
+          <span className="marquee-item">Track Daily Progress</span>
+          <span className="marquee-item">Ship Real Work</span>
+          <span className="marquee-item">Set Priorities</span>
+          <span className="marquee-item">Plan in Minutes</span>
+          <span className="marquee-item">Track Daily Progress</span>
+          <span className="marquee-item">Ship Real Work</span>
+        </div>
       </div>
+
+      <main>{children}</main>
+
+      <footer className="planner-footer">
+        <div className="footer-left">
+          DoFirst<span>.</span>
+        </div>
+        <div className="footer-copy">Your day, deliberately prioritized.</div>
+        <div className="footer-socials">
+          <a className="footer-social" href="#hero" title="Back to top">
+            ↑
+          </a>
+          <a className="footer-social" href="#form" title="Add task">
+            +
+          </a>
+          <a className="footer-social" href="#tasks" title="Checklist">
+            ✓
+          </a>
+          <a className="footer-social" href="#progress" title="Progress">
+            ◎
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
