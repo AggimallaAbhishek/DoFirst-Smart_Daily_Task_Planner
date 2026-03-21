@@ -9,12 +9,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm run dev --workspace backend',
+      command: 'PORT=3001 npm run dev --workspace backend',
       url: 'http://127.0.0.1:3001/health',
       reuseExistingServer: !process.env.CI
     },
     {
-      command: 'npm run dev --workspace frontend -- --host 127.0.0.1 --port 5173',
+      command:
+        'VITE_API_URL=http://127.0.0.1:3001 npm run dev --workspace frontend -- --host 127.0.0.1 --port 5173',
       url: 'http://127.0.0.1:5173',
       reuseExistingServer: !process.env.CI
     }
