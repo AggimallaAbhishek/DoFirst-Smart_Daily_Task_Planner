@@ -75,4 +75,26 @@ describe('authenticate middleware', () => {
     });
     expect(next).toHaveBeenCalledTimes(1);
   });
+
+  test('returns 401 when token payload has no subject', () => {
+    const token = signAccessToken(
+      {
+        email: 'person@example.com'
+      },
+      config
+    );
+
+    const request = {
+      headers: {
+        authorization: `Bearer ${token}`
+      }
+    };
+    const response = createResponse();
+    const next = jest.fn();
+
+    authenticate(config)(request, response, next);
+
+    expect(response.statusCode).toBe(401);
+    expect(next).not.toHaveBeenCalled();
+  });
 });

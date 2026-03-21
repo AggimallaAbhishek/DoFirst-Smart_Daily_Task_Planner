@@ -21,7 +21,13 @@ async function loadRuntimeSecrets(config, logger) {
     return {};
   }
 
-  const parsed = JSON.parse(response.SecretString);
+  let parsed;
+  try {
+    parsed = JSON.parse(response.SecretString);
+  } catch (error) {
+    throw new Error(`AWS Secrets Manager payload must be valid JSON. ${error.message}`);
+  }
+
   const allowedKeys = [
     'DATABASE_URL',
     'JWT_SECRET',

@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 
 const aliasSslModes = new Set(['prefer', 'require', 'verify-ca']);
+const sslParamKeys = new Set(['sslmode', 'sslcert', 'sslkey', 'sslrootcert']);
 
 function normalizeDatabaseUrl(databaseUrl) {
   try {
@@ -18,16 +19,28 @@ function normalizeDatabaseUrl(databaseUrl) {
   }
 }
 
+function hasSslDirectiveInConnectionString(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    return Array.from(sslParamKeys).some((key) => url.searchParams.has(key));
+  } catch {
+    return false;
+  }
+}
+
 function createPool(config) {
   const connectionString = normalizeDatabaseUrl(config.databaseUrl);
+  const hasSslDirective = hasSslDirectiveInConnectionString(connectionString);
+  const ssl =
+    config.isProduction && !hasSslDirective
+      ? {
+          rejectUnauthorized: config.dbSslRejectUnauthorized
+        }
+      : false;
 
   return new Pool({
     connectionString,
-    ssl: config.isProduction
-      ? {
-          rejectUnauthorized: false
-        }
-      : false
+    ssl
   });
 }
 

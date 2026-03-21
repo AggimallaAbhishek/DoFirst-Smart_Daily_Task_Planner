@@ -41,6 +41,7 @@ describe('application routes', () => {
 
     const response = await request(app).get('/health').set('Origin', 'https://malicious.example');
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(403);
+    expect(response.body.error).toBe('Origin is not allowed by CORS policy.');
   });
 });

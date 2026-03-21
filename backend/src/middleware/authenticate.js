@@ -14,9 +14,16 @@ function authenticate(config) {
 
     try {
       const payload = verifyAccessToken(token, config);
+      const userId = payload?.sub;
+
+      if (typeof userId !== 'string' || userId.trim() === '') {
+        return response.status(401).json({
+          error: 'Invalid or expired token.'
+        });
+      }
 
       request.user = {
-        id: payload.sub,
+        id: userId,
         email: payload.email
       };
 

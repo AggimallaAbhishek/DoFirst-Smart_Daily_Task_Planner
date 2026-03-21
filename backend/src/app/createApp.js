@@ -15,6 +15,7 @@ const taskRepository = require('../modules/tasks/repositories/taskRepository');
 const { createTaskController } = require('../modules/tasks/controllers/taskController');
 const { createTaskRouter } = require('../modules/tasks/routes/taskRoutes');
 const { createTaskService } = require('../modules/tasks/services/taskService');
+const { createHttpError } = require('../utils/httpError');
 
 function createCorsOptions(config) {
   return {
@@ -84,6 +85,7 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
   });
 
   app.disable('x-powered-by');
+  app.set('trust proxy', config.trustProxy);
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -100,6 +102,14 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     })
   );
   app.use(cors(createCorsOptions(config)));
+  app.use((error, request, response, next) => {
+    if (error?.message !== 'Not allowed by CORS.') {
+      next(error);
+      return;
+    }
+
+    next(createHttpError(403, 'Origin is not allowed by CORS policy.'));
+  });
   app.use(express.json({ limit: '10kb' }));
   app.use(requestLogger(logger));
   app.use('/api', rateLimiters.apiRateLimiter);
