@@ -19,19 +19,21 @@ test('registers, plans tasks, shows suggestion, and tracks progress', async ({ p
   await page.getByLabel('Priority').selectOption('high');
   await page.getByLabel('Estimated time').selectOption('30');
   await page.getByRole('button', { name: 'Add task' }).click();
+  await expect(page.getByTestId('task-item')).toHaveCount(1);
 
   await page.getByLabel('Task title').fill('Review dependency list');
   await page.getByLabel('Priority').selectOption('medium');
   await page.getByLabel('Estimated time').selectOption('15');
   await page.getByRole('button', { name: 'Add task' }).click();
+  await expect(page.getByTestId('task-item')).toHaveCount(2);
 
   await page.getByLabel('Task title').fill('Plan release notes');
   await page.getByLabel('Priority').selectOption('low');
   await page.getByLabel('Estimated time').selectOption('60');
   await page.getByRole('button', { name: 'Add task' }).click();
+  await expect(page.getByTestId('task-item')).toHaveCount(3);
 
   await expect(page.getByTestId('suggestion-banner')).toContainText('Write project brief');
-  await expect(page.getByTestId('task-item')).toHaveCount(3);
 
   await page.getByTestId('task-item').first().getByRole('button', { name: 'Complete' }).click();
 
