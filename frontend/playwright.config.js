@@ -9,7 +9,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'PORT=4301 npm run dev --workspace backend',
+      command: 'PORT=4301 npm run start --workspace backend',
       url: 'http://127.0.0.1:4301/health',
       reuseExistingServer: !process.env.CI
     },
