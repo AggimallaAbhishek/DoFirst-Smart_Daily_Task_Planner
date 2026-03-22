@@ -1,23 +1,15 @@
 const { OAuth2Client } = require('google-auth-library');
 
 function createGoogleOAuthClient({ config }) {
-  if (!config.googleOauthClientId || !config.googleOauthClientSecret) {
+  if (!config.googleOauthClientId) {
     return null;
   }
 
-  const oauthClient = new OAuth2Client(config.googleOauthClientId, config.googleOauthClientSecret);
+  const oauthClient = config.googleOauthClientSecret
+    ? new OAuth2Client(config.googleOauthClientId, config.googleOauthClientSecret)
+    : new OAuth2Client(config.googleOauthClientId);
 
-  async function getProfileFromCode(code) {
-    const tokenResponse = await oauthClient.getToken({
-      code,
-      redirect_uri: config.googleOauthRedirectUri || 'postmessage'
-    });
-    const idToken = tokenResponse?.tokens?.id_token;
-
-    if (!idToken) {
-      throw new Error('Google did not return an ID token.');
-    }
-
+  async function verifyProfileFromIdToken(idToken) {
     const ticket = await oauthClient.verifyIdToken({
       idToken,
       audience: config.googleOauthClientId
@@ -33,8 +25,35 @@ function createGoogleOAuthClient({ config }) {
     };
   }
 
+  async function getProfileFromCode(code) {
+    if (!config.googleOauthClientSecret) {
+      throw new Error('Google OAuth client secret is required for code exchange.');
+    }
+
+    const tokenResponse = await oauthClient.getToken({
+      code,
+      redirect_uri: config.googleOauthRedirectUri || 'postmessage'
+    });
+    const idToken = tokenResponse?.tokens?.id_token;
+
+    if (!idToken) {
+      throw new Error('Google did not return an ID token.');
+    }
+
+    return verifyProfileFromIdToken(idToken);
+  }
+
+  async function getProfileFromIdToken(idToken) {
+    if (!idToken) {
+      throw new Error('Google ID token is required.');
+    }
+
+    return verifyProfileFromIdToken(idToken);
+  }
+
   return {
-    getProfileFromCode
+    getProfileFromCode,
+    getProfileFromIdToken
   };
 }
 

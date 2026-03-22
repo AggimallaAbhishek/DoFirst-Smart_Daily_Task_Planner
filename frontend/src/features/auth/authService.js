@@ -10,7 +10,7 @@ export async function loginUser(credentials) {
   return response.data;
 }
 
-export async function loginWithGoogleCode(code) {
-  const response = await httpClient.post('/api/auth/google', { code });
+export async function loginWithGoogle(payload) {
+  const response = await httpClient.post('/api/auth/google', payload);
   return response.data;
 }

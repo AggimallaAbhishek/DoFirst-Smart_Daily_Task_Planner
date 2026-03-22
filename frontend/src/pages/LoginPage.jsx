@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthTemplatePage from '../components/AuthTemplatePage';
 import { requestGoogleAuthCode } from '../features/auth/googleOAuth';
+import { isNativeRuntime, requestNativeGoogleIdToken } from '../features/auth/nativeGoogleOAuth';
 import { useAuth } from '../features/auth/useAuth';
 
 export default function LoginPage() {
@@ -34,11 +35,18 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const code = await requestGoogleAuthCode({
-        clientId: googleClientId,
-        redirectUri: googleRedirectUri
-      });
-      await loginWithGoogle(code);
+      if (isNativeRuntime()) {
+        const idToken = await requestNativeGoogleIdToken({
+          clientId: googleClientId
+        });
+        await loginWithGoogle({ idToken });
+      } else {
+        const code = await requestGoogleAuthCode({
+          clientId: googleClientId,
+          redirectUri: googleRedirectUri
+        });
+        await loginWithGoogle({ code });
+      }
       navigate('/', { replace: true });
     } catch (googleError) {
       throw new Error(getApiErrorMessage(googleError, 'Unable to sign in with Google.'));

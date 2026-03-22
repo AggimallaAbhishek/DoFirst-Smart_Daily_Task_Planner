@@ -48,18 +48,27 @@ function createAuthService({ authRepository, logger, googleOAuthClient }) {
     return mapUser(user);
   }
 
-  async function loginWithGoogle({ code }) {
+  async function loginWithGoogle({ code, idToken }) {
     if (!googleOAuthClient) {
       throw createHttpError(503, 'Google sign-in is not configured for this environment.');
     }
 
-    logger.debug('Attempting Google sign-in.');
+    const usesCodeExchange = Boolean(code);
+
+    logger.debug('Attempting Google sign-in.', {
+      flow: usesCodeExchange ? 'authorization-code' : 'id-token'
+    });
 
     let profile;
     try {
-      profile = await googleOAuthClient.getProfileFromCode(code);
+      if (usesCodeExchange) {
+        profile = await googleOAuthClient.getProfileFromCode(code);
+      } else {
+        profile = await googleOAuthClient.getProfileFromIdToken(idToken);
+      }
     } catch (error) {
-      logger.debug('Google sign-in failed during code exchange.', {
+      logger.debug('Google sign-in failed during token verification.', {
+        flow: usesCodeExchange ? 'authorization-code' : 'id-token',
         reason: error.message
       });
       throw createHttpError(401, 'Google sign-in failed. Please try again.');

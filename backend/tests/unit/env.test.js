@@ -10,7 +10,14 @@ describe('resolveConfig', () => {
 
     expect(config.port).toBe(4301);
     expect(config.logLevel).toBe('debug');
-    expect(config.allowedOrigins).toEqual(['http://localhost:5173', 'http://127.0.0.1:5173']);
+    expect(config.allowedOrigins).toEqual([
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost',
+      'https://localhost',
+      'capacitor://localhost',
+      'ionic://localhost'
+    ]);
     expect(config.trustProxy).toBe(false);
     expect(config.dbSslRejectUnauthorized).toBe(false);
     expect(config.googleOauthRedirectUri).toBe('postmessage');
@@ -35,7 +42,8 @@ describe('resolveConfig', () => {
       JWT_SECRET: 'prod-secret',
       FRONTEND_ORIGIN: 'https://app.example.com',
       TRUST_PROXY: '2',
-      DB_SSL_REJECT_UNAUTHORIZED: 'true'
+      DB_SSL_REJECT_UNAUTHORIZED: 'true',
+      ENABLE_NATIVE_APP_ORIGINS: 'false'
     });
 
     expect(config.logLevel).toBe('info');
@@ -55,5 +63,17 @@ describe('resolveConfig', () => {
     });
 
     expect(config.googleOauthRedirectUri).toBe('https://app.example.com/auth/google/callback');
+  });
+
+  test('supports disabling native app origins', () => {
+    const config = resolveConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
+      JWT_SECRET: 'prod-secret',
+      ALLOWED_ORIGINS: 'https://app.example.com',
+      ENABLE_NATIVE_APP_ORIGINS: 'false'
+    });
+
+    expect(config.allowedOrigins).toEqual(['https://app.example.com']);
   });
 });

@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/apiError';
 import { clearSession, getStoredSession, saveSession } from '../../lib/session';
-import { loginUser, loginWithGoogleCode, registerUser } from './authService';
+import { loginUser, loginWithGoogle, registerUser } from './authService';
 
 export const AuthContext = createContext(null);
 
@@ -30,8 +30,8 @@ export function AuthProvider({ children }) {
     return login(credentials);
   }
 
-  async function loginWithGoogle(code) {
-    const result = await loginWithGoogleCode(code);
+  async function loginViaGoogle(payload) {
+    const result = await loginWithGoogle(payload);
     const nextSession = {
       token: result.token,
       user: result.user
@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(session?.token),
     isBootstrapping,
     login,
-    loginWithGoogle,
+    loginWithGoogle: loginViaGoogle,
     register,
     logout,
     getApiErrorMessage

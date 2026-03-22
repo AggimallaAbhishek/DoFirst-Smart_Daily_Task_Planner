@@ -114,4 +114,40 @@ describe('authService', () => {
       statusCode: 401
     });
   });
+
+  test('google login supports native id token flow for existing users', async () => {
+    const authService = createAuthService({
+      authRepository: {
+        findUserByEmail: jest.fn().mockResolvedValue({
+          id: '36b4fc2a-03f0-487f-b85f-e74856b145e5',
+          email: 'native-user@example.com',
+          created_at: '2026-03-21T12:00:00.000Z'
+        }),
+        createUser: jest.fn()
+      },
+      googleOAuthClient: {
+        getProfileFromCode: jest.fn(),
+        getProfileFromIdToken: jest.fn().mockResolvedValue({
+          email: 'native-user@example.com',
+          emailVerified: true,
+          name: 'Native User',
+          picture: 'https://example.com/native-avatar.png',
+          subject: 'native-subject'
+        })
+      },
+      logger
+    });
+
+    const user = await authService.loginWithGoogle({
+      idToken: 'native-id-token'
+    });
+
+    expect(user).toEqual({
+      id: '36b4fc2a-03f0-487f-b85f-e74856b145e5',
+      email: 'native-user@example.com',
+      createdAt: '2026-03-21T12:00:00.000Z',
+      name: 'Native User',
+      avatarUrl: 'https://example.com/native-avatar.png'
+    });
+  });
 });

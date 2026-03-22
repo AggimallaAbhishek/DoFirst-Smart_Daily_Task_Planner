@@ -39,10 +39,37 @@ describe('auth validation schemas', () => {
     expect(result.error).toBeUndefined();
   });
 
+  test('accepts valid google id-token payload', () => {
+    const result = googleLoginSchema.validate({
+      body: {
+        idToken:
+          'eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQifQ.eyJlbWFpbCI6InBlcnNvbkBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlfQ.signature-part-with-extra-length'
+      },
+      params: {},
+      query: {}
+    });
+
+    expect(result.error).toBeUndefined();
+  });
+
   test('rejects empty google auth code payload', () => {
     const result = googleLoginSchema.validate({
       body: {
         code: 'short'
+      },
+      params: {},
+      query: {}
+    });
+
+    expect(result.error).toBeDefined();
+  });
+
+  test('rejects payload when both code and idToken are sent', () => {
+    const result = googleLoginSchema.validate({
+      body: {
+        code: '4/0AdQt8qh-example-auth-code-with-sufficient-length',
+        idToken:
+          'eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQifQ.eyJlbWFpbCI6InBlcnNvbkBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlfQ.signature-part-with-extra-length'
       },
       params: {},
       query: {}

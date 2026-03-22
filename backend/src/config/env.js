@@ -73,6 +73,17 @@ function toAllowedOrigins(value, fallbackOrigin) {
     .filter(Boolean);
 }
 
+function mergeOrigins(...originLists) {
+  return Array.from(
+    new Set(
+      originLists
+        .flat()
+        .map((origin) => origin?.trim?.())
+        .filter(Boolean)
+    )
+  );
+}
+
 function resolveConfig(source = process.env) {
   const nodeEnv = source.NODE_ENV || 'development';
   const isProduction = nodeEnv === 'production';
@@ -80,6 +91,11 @@ function resolveConfig(source = process.env) {
   const defaultAllowedOrigins = isProduction
     ? defaultFrontendOrigin
     : [defaultFrontendOrigin, 'http://127.0.0.1:5173'].filter(Boolean).join(',');
+  const defaultNativeAppOrigins = 'http://localhost,https://localhost,capacitor://localhost,ionic://localhost';
+  const allowNativeAppOrigins = parseBoolean(source.ENABLE_NATIVE_APP_ORIGINS, true);
+  const configuredOrigins = toAllowedOrigins(source.ALLOWED_ORIGINS, defaultAllowedOrigins);
+  const nativeAppOrigins = toAllowedOrigins(source.NATIVE_APP_ORIGINS, defaultNativeAppOrigins);
+  const allowedOrigins = allowNativeAppOrigins ? mergeOrigins(configuredOrigins, nativeAppOrigins) : configuredOrigins;
 
   const config = {
     nodeEnv,
@@ -90,7 +106,7 @@ function resolveConfig(source = process.env) {
     jwtSecret: source.JWT_SECRET || (isProduction ? '' : 'change-me'),
     jwtExpiresIn: source.JWT_EXPIRES_IN || '24h',
     frontendOrigin: defaultFrontendOrigin,
-    allowedOrigins: toAllowedOrigins(source.ALLOWED_ORIGINS, defaultAllowedOrigins),
+    allowedOrigins,
     logLevel: source.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
     authRateLimitMax: parsePositiveInteger(source.AUTH_RATE_LIMIT_MAX, 5),
     apiRateLimitMax: parsePositiveInteger(source.API_RATE_LIMIT_MAX, 100),
