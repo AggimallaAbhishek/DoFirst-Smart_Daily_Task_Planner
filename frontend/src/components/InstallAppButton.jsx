@@ -1,17 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 
 export default function InstallAppButton() {
   const {
+    canInstall,
     dismissIosHint,
     installApp,
     isInstalled,
+    isIos,
     isSafari,
     showIosHint,
     showSuccess
   } = usePwaInstall();
   const [isOpeningPrompt, setIsOpeningPrompt] = useState(false);
   const [feedback, setFeedback] = useState('');
+
+  useEffect(() => {
+    if (!feedback) {
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setFeedback('');
+    }, 4800);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [feedback]);
 
   async function handleInstall() {
     setFeedback('');
@@ -31,7 +47,11 @@ export default function InstallAppButton() {
       }
 
       if (result.status === 'unsupported') {
-        setFeedback('Install is not available in this browser.');
+        if (isSafari) {
+          setFeedback('Use Safari menu to install: Share -> Add to Home Screen.');
+        } else {
+          setFeedback('Use Chrome or Edge menu: open settings and choose "Install app".');
+        }
       }
     } finally {
       setIsOpeningPrompt(false);
@@ -43,6 +63,7 @@ export default function InstallAppButton() {
   }
 
   const shouldShowButton = !isInstalled;
+  const buttonLabel = canInstall || isIos ? 'Install App' : 'How to Install';
 
   return (
     <div className="install-app-wrapper">
@@ -53,7 +74,7 @@ export default function InstallAppButton() {
           disabled={isOpeningPrompt}
           onClick={handleInstall}
         >
-          {isOpeningPrompt ? 'Opening...' : 'Install App'}
+          {isOpeningPrompt ? 'Opening...' : buttonLabel}
         </button>
       ) : null}
 
