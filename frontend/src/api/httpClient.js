@@ -11,6 +11,9 @@ function resolveApiBaseUrl() {
   }
 
   if (import.meta.env.PROD) {
+    console.warn('[httpClient] VITE_API_URL is missing. Using production fallback URL.', {
+      fallback: PROD_API_FALLBACK
+    });
     return PROD_API_FALLBACK;
   }
 

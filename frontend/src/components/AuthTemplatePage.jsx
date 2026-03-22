@@ -218,7 +218,7 @@ export default function AuthTemplatePage({
 
           <Link className="authx-brand" to="/">
             <div className="authx-brand-mark">
-              <img className="authx-brand-logo" src="/Dofirst_1.png" alt="DoFirst logo" />
+              <img className="authx-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
             </div>
             <span className="authx-brand-name">DoFirst</span>
           </Link>
@@ -283,7 +283,7 @@ export default function AuthTemplatePage({
 
           <Link className="authx-mobile-brand" to="/">
             <div className="authx-mobile-brand-mark">
-              <img className="authx-mobile-brand-logo" src="/Dofirst_1.png" alt="DoFirst logo" />
+              <img className="authx-mobile-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
             </div>
             <span className="authx-mobile-brand-name">DoFirst</span>
           </Link>
