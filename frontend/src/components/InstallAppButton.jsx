@@ -107,7 +107,7 @@ export default function InstallAppButton() {
   }
 
   const shouldShowButton = !isInstalled;
-  const buttonLabel = canInstall || isIos ? 'Install App' : downloadUrl ? 'Download App' : 'How to Install';
+  const buttonLabel = canInstall || isIos ? 'Install App' : downloadUrl ? 'Download App' : 'Install';
 
   return (
     <div className="install-app-wrapper">
