@@ -52,6 +52,15 @@ function createHealthHandler({ pool, startedAt }) {
   };
 }
 
+function createLivenessHandler({ startedAt }) {
+  return (request, response) =>
+    response.status(200).json({
+      status: 'ok',
+      uptimeMs: Date.now() - startedAt,
+      version: process.env.npm_package_version || '1.0.0'
+    });
+}
+
 function createApp({ config, logger, pool, startedAt = Date.now() }) {
   const app = express();
   const rateLimiters = createRateLimiters(config);
@@ -137,9 +146,11 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     response.status(200).json({
       service: 'smart-daily-planner-backend',
       status: 'ok',
+      liveness: '/health/live',
       health: '/health'
     })
   );
+  app.get('/health/live', createLivenessHandler({ startedAt }));
   app.get('/health', createHealthHandler({ pool, startedAt }));
   app.use(
     '/api/auth',

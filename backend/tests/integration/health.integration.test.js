@@ -31,4 +31,15 @@ describe('health route', () => {
     expect(response.body.database).toBe('unavailable');
     expect(response.body.status).toBe('degraded');
   });
+
+  test('returns 200 from liveness route even when db checks fail', async () => {
+    const app = createTestApp({
+      query: jest.fn().mockRejectedValue(new Error('db down'))
+    });
+
+    const response = await request(app).get('/health/live');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe('ok');
+  });
 });

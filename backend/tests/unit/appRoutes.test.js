@@ -44,4 +44,19 @@ describe('application routes', () => {
     expect(response.statusCode).toBe(403);
     expect(response.body.error).toBe('Origin is not allowed by CORS policy.');
   });
+
+  test('returns liveness endpoint without requiring database calls', async () => {
+    const query = jest.fn().mockResolvedValue({ rows: [] });
+    const app = createApp({
+      config,
+      logger,
+      pool: { query }
+    });
+
+    const response = await request(app).get('/health/live');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe('ok');
+    expect(query).not.toHaveBeenCalled();
+  });
 });

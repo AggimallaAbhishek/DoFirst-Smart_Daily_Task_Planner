@@ -57,6 +57,12 @@ async function startServer() {
   initializeSentry(config);
 
   const pool = createPool(config);
+  pool.on('error', (error) => {
+    logger.error('Unexpected PostgreSQL pool error.', {
+      errorMessage: error.message,
+      stack: error.stack
+    });
+  });
   await ensureDatabaseConnection(pool, logger, config);
   const app = createApp({
     config,
@@ -87,6 +93,20 @@ async function startServer() {
 
   process.on('SIGINT', () => {
     void shutdown('SIGINT');
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error('Unhandled promise rejection.', {
+      reason: reason instanceof Error ? reason.message : String(reason)
+    });
+  });
+
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught exception.', {
+      errorMessage: error.message,
+      stack: error.stack
+    });
+    process.exit(1);
   });
 
   return {
