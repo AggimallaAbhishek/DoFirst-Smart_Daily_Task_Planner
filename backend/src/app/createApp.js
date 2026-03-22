@@ -49,6 +49,7 @@ function createCorsOptions(config) {
 }
 
 function createHealthHandler({ pool, startedAt, cacheTtlMs }) {
+  const effectiveCacheTtlMs = Number.isFinite(cacheTtlMs) ? cacheTtlMs : 3000;
   let cachedAt = 0;
   let cachedResult = null;
   let pendingCheck = null;
@@ -86,7 +87,7 @@ function createHealthHandler({ pool, startedAt, cacheTtlMs }) {
 
   return async (request, response) => {
     const now = Date.now();
-    if (cachedResult && now - cachedAt < cacheTtlMs) {
+    if (cachedResult && now - cachedAt < effectiveCacheTtlMs) {
       return response.status(cachedResult.statusCode).json(buildHealthPayload(cachedResult));
     }
 

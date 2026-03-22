@@ -41,14 +41,16 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting, selectedDa
 
     setError('');
 
-    await onSubmit({
+    const wasSuccessful = await onSubmit({
       title: form.title.trim(),
       priority: form.priority,
       estimatedMinutes: Number(form.estimatedMinutes),
       taskDate: form.taskDate
     });
 
-    setForm(buildInitialForm(form.taskDate));
+    if (wasSuccessful) {
+      setForm(buildInitialForm(form.taskDate));
+    }
   }
 
   return (

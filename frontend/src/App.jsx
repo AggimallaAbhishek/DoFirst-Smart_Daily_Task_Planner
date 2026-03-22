@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import TemplateCursor from './components/TemplateCursor';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './features/auth/useAuth';
@@ -43,9 +43,12 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const showTemplateCursor = !['/login', '/register'].includes(location.pathname);
+
   return (
     <>
-      <TemplateCursor />
+      {showTemplateCursor ? <TemplateCursor /> : null}
       <AppRoutes />
     </>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from '../components/AppShell';
 import DashboardToolbar from '../components/DashboardToolbar';
 import ProgressSummary from '../components/ProgressSummary';
@@ -89,6 +89,7 @@ export default function DashboardPage() {
   const [manualOrder, setManualOrder] = useState([]);
   const [streakCount, setStreakCount] = useState(0);
   const [error, setError] = useState('');
+  const selectedDateRef = useRef(selectedDate);
 
   async function loadDashboard(taskDate) {
     const loadedTasks = await getTasks(taskDate);
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
+    selectedDateRef.current = selectedDate;
     setManualOrder(readStoredTaskOrder(selectedDate));
     setSearchValue('');
     setStatusFilter('all');
@@ -139,8 +141,20 @@ export default function DashboardPage() {
     const ordered = manualOrder.map((taskId) => byId.get(taskId)).filter(Boolean);
     const manualOrderSet = new Set(manualOrder);
     const missing = tasks.filter((task) => !manualOrderSet.has(task.id));
+    const merged = [...ordered, ...missing];
+    const pending = [];
+    const completed = [];
 
-    return [...ordered, ...missing];
+    merged.forEach((task) => {
+      if (task.isCompleted) {
+        completed.push(task);
+        return;
+      }
+
+      pending.push(task);
+    });
+
+    return [...pending, ...completed];
   }, [tasks, manualOrder]);
 
   const suggestion = useMemo(() => selectSuggestionTask(tasks), [tasks]);
@@ -273,20 +287,29 @@ export default function DashboardPage() {
     });
   }
 
-  async function handleMutation(action, fallbackMessage) {
+  async function handleMutation(action, fallbackMessage, applyLocalUpdate) {
     setError('');
     setIsMutating(true);
+    const requestDate = selectedDateRef.current;
 
     try {
-      await action();
-      await loadDashboard(selectedDate);
+      const result = await action();
+
+      if (applyLocalUpdate && selectedDateRef.current === requestDate) {
+        setTasks((currentTasks) => applyLocalUpdate(currentTasks, result));
+      } else {
+        await loadDashboard(selectedDateRef.current);
+      }
+
+      return true;
     } catch (mutationError) {
       if (mutationError.response?.status === 401) {
         logout();
-        return;
+        return false;
       }
 
       setError(getApiErrorMessage(mutationError, fallbackMessage));
+      return false;
     } finally {
       setIsMutating(false);
     }
@@ -341,7 +364,11 @@ export default function DashboardPage() {
             isSubmitting={isMutating}
             selectedDate={selectedDate}
             onSubmit={(payload) =>
-              handleMutation(() => createTask(payload), 'Unable to add the task right now.')
+              handleMutation(
+                () => createTask(payload),
+                'Unable to add the task right now.',
+                (currentTasks, createdTask) => [...currentTasks, createdTask]
+              )
             }
           />
         </div>
@@ -353,11 +380,19 @@ export default function DashboardPage() {
             onToggleComplete={(task) =>
               handleMutation(
                 () => updateTask(task.id, { isCompleted: !task.isCompleted }),
-                'Unable to update the task.'
+                'Unable to update the task.',
+                (currentTasks, updatedTask) =>
+                  currentTasks.map((currentTask) =>
+                    currentTask.id === updatedTask.id ? updatedTask : currentTask
+                  )
               )
             }
             onDelete={(task) =>
-              handleMutation(() => deleteTask(task.id), 'Unable to delete the task.')
+              handleMutation(
+                () => deleteTask(task.id),
+                'Unable to delete the task.',
+                (currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== task.id)
+              )
             }
             searchValue={searchValue}
             onSearchChange={setSearchValue}

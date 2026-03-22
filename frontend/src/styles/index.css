@@ -632,6 +632,14 @@ main {
   padding: 2rem 4rem 0;
 }
 
+@supports (content-visibility: auto) {
+  .planner-section,
+  .planner-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 520px;
+  }
+}
+
 .planner-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

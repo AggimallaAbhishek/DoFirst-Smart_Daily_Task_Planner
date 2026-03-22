@@ -7,6 +7,19 @@ function getGoogleAccountsApi() {
   return window.google?.accounts?.oauth2;
 }
 
+function ensureGooglePreconnect() {
+  if (document.querySelector('link[data-google-preconnect="1"]')) {
+    return;
+  }
+
+  const preconnect = document.createElement('link');
+  preconnect.rel = 'preconnect';
+  preconnect.href = 'https://accounts.google.com';
+  preconnect.crossOrigin = 'anonymous';
+  preconnect.dataset.googlePreconnect = '1';
+  document.head.appendChild(preconnect);
+}
+
 function loadGoogleScript() {
   if (getGoogleAccountsApi()) {
     return Promise.resolve(window.google);
@@ -17,9 +30,15 @@ function loadGoogleScript() {
   }
 
   scriptLoadPromise = new Promise((resolve, reject) => {
+    ensureGooglePreconnect();
     const existingScript = document.getElementById(GOOGLE_SCRIPT_ID);
 
     if (existingScript) {
+      if (existingScript.dataset.loaded === '1' || getGoogleAccountsApi()) {
+        resolve(window.google);
+        return;
+      }
+
       existingScript.addEventListener('load', () => resolve(window.google), { once: true });
       existingScript.addEventListener('error', () => reject(new Error('Unable to load Google Identity Services.')), {
         once: true
@@ -32,7 +51,10 @@ function loadGoogleScript() {
     script.src = GOOGLE_SCRIPT_SRC;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve(window.google);
+    script.onload = () => {
+      script.dataset.loaded = '1';
+      resolve(window.google);
+    };
     script.onerror = () => reject(new Error('Unable to load Google Identity Services.'));
     document.head.appendChild(script);
   });
