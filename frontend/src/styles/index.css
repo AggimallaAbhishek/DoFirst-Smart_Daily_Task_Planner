@@ -714,6 +714,32 @@ main {
 .toolbar-date-input {
   min-width: 168px;
   padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  background: rgba(10, 10, 10, 0.74);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  outline: none;
+  color-scheme: dark;
+}
+
+.toolbar-date-input:focus {
+  border-color: var(--accent);
+}
+
+.toolbar-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2);
+  cursor: pointer;
+  opacity: 0.95;
+}
+
+.toolbar-date-input::-webkit-datetime-edit,
+.toolbar-date-input::-webkit-datetime-edit-text,
+.toolbar-date-input::-webkit-datetime-edit-day-field,
+.toolbar-date-input::-webkit-datetime-edit-month-field,
+.toolbar-date-input::-webkit-datetime-edit-year-field {
+  color: #fff;
 }
 
 .toolbar-date-window {
