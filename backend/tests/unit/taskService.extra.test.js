@@ -12,6 +12,19 @@ describe('taskService extra branches', () => {
   test('creates a task when the daily limit has not been reached', async () => {
     const taskService = createTaskService({
       taskRepository: {
+        createTaskIfUnderDailyLimit: jest.fn().mockResolvedValue({
+          taskCountBeforeInsert: 2,
+          task: {
+            id: 'task-1',
+            user_id: 'user-1',
+            title: 'Write proposal',
+            priority: 'high',
+            estimated_minutes: 30,
+            is_completed: false,
+            task_date: '2026-03-21',
+            created_at: '2026-03-21T10:00:00.000Z'
+          }
+        }),
         countTasksForDate: jest.fn().mockResolvedValue(2),
         createTask: jest.fn().mockResolvedValue({
           id: 'task-1',
@@ -36,6 +49,32 @@ describe('taskService extra branches', () => {
 
     expect(result.title).toBe('Write proposal');
     expect(result.estimatedMinutes).toBe(30);
+  });
+
+  test('rejects create when atomic insert reports daily limit reached', async () => {
+    const repository = {
+      createTaskIfUnderDailyLimit: jest.fn().mockResolvedValue({
+        taskCountBeforeInsert: 5,
+        task: null
+      }),
+      createTask: jest.fn()
+    };
+    const taskService = createTaskService({
+      taskRepository: repository,
+      logger
+    });
+
+    await expect(
+      taskService.createTaskForToday('user-1', {
+        title: 'Limit reached task',
+        priority: 'high',
+        estimatedMinutes: 30,
+        taskDate: '2026-03-21'
+      })
+    ).rejects.toMatchObject({
+      statusCode: 400
+    });
+    expect(repository.createTask).not.toHaveBeenCalled();
   });
 
   test('deletes a task for its owner', async () => {

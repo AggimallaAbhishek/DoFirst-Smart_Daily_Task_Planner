@@ -123,6 +123,7 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     taskRepository: {
       countTasksForDate: (payload) => taskRepository.countTasksForDate(pool, payload),
       createTask: (payload) => taskRepository.createTask(pool, payload),
+      createTaskIfUnderDailyLimit: (payload) => taskRepository.createTaskIfUnderDailyLimit(pool, payload),
       listTasksForDate: (payload) => taskRepository.listTasksForDate(pool, payload),
       findTaskById: (taskId) => taskRepository.findTaskById(pool, taskId),
       updateTask: (payload) => taskRepository.updateTask(pool, payload),

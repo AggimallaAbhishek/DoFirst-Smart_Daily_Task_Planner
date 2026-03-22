@@ -29,6 +29,52 @@ async function createTask(pool, { userId, title, priority, estimatedMinutes, tas
   return result.rows[0];
 }
 
+async function createTaskIfUnderDailyLimit(pool, { userId, title, priority, estimatedMinutes, taskDate }) {
+  const result = await pool.query(
+    `
+      WITH daily_count AS (
+        SELECT COUNT(*)::INTEGER AS task_count
+        FROM tasks
+        WHERE user_id = $1
+          AND task_date = $5
+      ),
+      inserted AS (
+        INSERT INTO tasks (user_id, title, priority, estimated_minutes, task_date)
+        SELECT $1, $2, $3, $4, $5
+        FROM daily_count
+        WHERE task_count < 5
+        RETURNING ${TASK_COLUMNS}
+      )
+      SELECT
+        daily_count.task_count,
+        inserted.${TASK_COLUMNS.replaceAll(', ', ', inserted.')}
+      FROM daily_count
+      LEFT JOIN inserted ON TRUE
+    `,
+    [userId, title.trim(), priority, estimatedMinutes, taskDate]
+  );
+
+  const row = result.rows[0] || null;
+  const taskCountBeforeInsert = row?.task_count || 0;
+  const insertedTask = row?.id
+    ? {
+        id: row.id,
+        user_id: row.user_id,
+        title: row.title,
+        priority: row.priority,
+        estimated_minutes: row.estimated_minutes,
+        is_completed: row.is_completed,
+        task_date: row.task_date,
+        created_at: row.created_at
+      }
+    : null;
+
+  return {
+    taskCountBeforeInsert,
+    task: insertedTask
+  };
+}
+
 async function listTasksForDate(pool, { userId, taskDate }) {
   const result = await pool.query(
     `
@@ -143,6 +189,7 @@ async function findSuggestion(pool, { userId, taskDate }) {
 module.exports = {
   countTasksForDate,
   createTask,
+  createTaskIfUnderDailyLimit,
   deleteTask,
   deleteTaskForUser,
   findSuggestion,

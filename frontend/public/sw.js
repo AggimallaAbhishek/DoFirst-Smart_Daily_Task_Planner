@@ -1,6 +1,9 @@
-const CACHE_VERSION = 'dofirst-v1';
+const CACHE_VERSION = 'dofirst-v2';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
-const STATIC_CACHE = `${CACHE_VERSION}-static`;
+const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+const MAX_RUNTIME_ENTRIES = 80;
+const NAVIGATION_NETWORK_TIMEOUT_MS = 2500;
+
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -12,6 +15,38 @@ const SHELL_ASSETS = [
   '/icons/apple-touch-icon.png'
 ];
 
+function isCacheableStaticAsset(request, url) {
+  if (request.method !== 'GET') {
+    return false;
+  }
+
+  if (url.origin !== self.location.origin) {
+    return false;
+  }
+
+  if (url.pathname.startsWith('/api/')) {
+    return false;
+  }
+
+  if (url.pathname.endsWith('.apk')) {
+    return false;
+  }
+
+  return ['style', 'script', 'image', 'font', 'manifest'].includes(request.destination);
+}
+
+async function trimCache(cacheName, maxEntries) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+
+  if (keys.length <= maxEntries) {
+    return;
+  }
+
+  const deletions = keys.slice(0, keys.length - maxEntries).map((key) => cache.delete(key));
+  await Promise.all(deletions);
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS))
@@ -21,68 +56,103 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
-          .filter((key) => key !== SHELL_CACHE && key !== STATIC_CACHE)
+          .filter((key) => key !== SHELL_CACHE && key !== RUNTIME_CACHE)
           .map((key) => caches.delete(key))
-      )
-    )
+      );
+
+      if ('navigationPreload' in self.registration) {
+        await self.registration.navigationPreload.enable();
+      }
+
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-async function handleNavigation(request) {
+async function handleNavigation(event) {
+  const { request } = event;
+  const shellCache = await caches.open(SHELL_CACHE);
+  let timeoutId;
+
   try {
-    return await fetch(request);
+    const networkResponse = await Promise.race([
+      fetch(request),
+      new Promise((resolve, reject) => {
+        timeoutId = self.setTimeout(() => {
+          reject(new Error('Navigation network timeout'));
+        }, NAVIGATION_NETWORK_TIMEOUT_MS);
+      })
+    ]);
+
+    if (networkResponse && networkResponse.ok) {
+      return networkResponse;
+    }
   } catch {
-    const cache = await caches.open(SHELL_CACHE);
-    return (await cache.match('/index.html')) || cache.match('/offline.html');
+    // Ignore and fall back to cache below.
+  } finally {
+    if (timeoutId) {
+      self.clearTimeout(timeoutId);
+    }
   }
+
+  if ('navigationPreload' in self.registration) {
+    try {
+      const preloadResponse = await self.registration.navigationPreload.getState();
+      if (preloadResponse?.enabled) {
+        const response = await event.preloadResponse;
+        if (response) {
+          return response;
+        }
+      }
+    } catch {
+      // Continue to shell cache fallback.
+    }
+  }
+
+  return (await shellCache.match('/index.html')) || shellCache.match('/offline.html');
 }
 
 async function handleStaticAsset(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cachedResponse = await cache.match(request);
+  const runtimeCache = await caches.open(RUNTIME_CACHE);
+  const cached = await runtimeCache.match(request);
 
-  if (cachedResponse) {
-    return cachedResponse;
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        runtimeCache.put(request, response.clone());
+        trimCache(RUNTIME_CACHE, MAX_RUNTIME_ENTRIES);
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    networkPromise.catch(() => null);
+    return cached;
   }
 
-  const networkResponse = await fetch(request);
-  if (networkResponse.ok) {
-    cache.put(request, networkResponse.clone());
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
   }
-  return networkResponse;
+
+  return runtimeCache.match(request);
 }
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  if (request.method !== 'GET') {
-    return;
-  }
-
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
 
   if (request.mode === 'navigate') {
-    event.respondWith(handleNavigation(request));
+    event.respondWith(handleNavigation(event));
     return;
   }
 
-  if (
-    request.destination === 'style' ||
-    request.destination === 'script' ||
-    request.destination === 'image' ||
-    request.destination === 'font' ||
-    request.destination === 'manifest'
-  ) {
+  if (isCacheableStaticAsset(request, url)) {
     event.respondWith(handleStaticAsset(request));
   }
 });

@@ -99,15 +99,32 @@ function createTaskService({ taskRepository, logger, readCacheTtlMs = DEFAULT_TA
 
   async function createTaskForToday(userId, payload) {
     const taskDate = normalizeTaskDate(payload.taskDate);
-    const existingCount = await taskRepository.countTasksForDate({
-      userId,
-      taskDate
-    });
+    const supportsAtomicCreate = typeof taskRepository.createTaskIfUnderDailyLimit === 'function';
+    let existingCount = 0;
+    let row = null;
+
+    if (supportsAtomicCreate) {
+      const atomicResult = await taskRepository.createTaskIfUnderDailyLimit({
+        userId,
+        title: payload.title,
+        priority: payload.priority,
+        estimatedMinutes: payload.estimatedMinutes,
+        taskDate
+      });
+      existingCount = atomicResult.taskCountBeforeInsert;
+      row = atomicResult.task;
+    } else {
+      existingCount = await taskRepository.countTasksForDate({
+        userId,
+        taskDate
+      });
+    }
 
     logger.debug('Creating task.', {
       userId,
       taskDate,
       existingCount,
+      usingAtomicCreate: supportsAtomicCreate,
       priority: payload.priority
     });
 
@@ -115,13 +132,15 @@ function createTaskService({ taskRepository, logger, readCacheTtlMs = DEFAULT_TA
       throw createHttpError(400, 'You can only add up to 5 tasks per day.');
     }
 
-    const row = await taskRepository.createTask({
-      userId,
-      title: payload.title,
-      priority: payload.priority,
-      estimatedMinutes: payload.estimatedMinutes,
-      taskDate
-    });
+    if (!row) {
+      row = await taskRepository.createTask({
+        userId,
+        title: payload.title,
+        priority: payload.priority,
+        estimatedMinutes: payload.estimatedMinutes,
+        taskDate
+      });
+    }
 
     invalidateTaskDateCache(userId, taskDate);
     return mapTask(row);
