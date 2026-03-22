@@ -1,7 +1,7 @@
-import { SocialLogin } from '@capgo/capacitor-social-login';
 import { Capacitor } from '@capacitor/core';
 
 let initializePromise;
+let socialLoginPromise;
 
 function normalizeErrorMessage(error) {
   const message = error?.message || 'Google sign-in failed.';
@@ -22,20 +22,32 @@ export function isNativeRuntime() {
   return Capacitor.isNativePlatform();
 }
 
+async function getSocialLoginPlugin() {
+  if (!socialLoginPromise) {
+    socialLoginPromise = import('@capgo/capacitor-social-login').then((module) => module.SocialLogin);
+  }
+
+  return socialLoginPromise;
+}
+
 async function initializeNativeGoogle(clientId) {
   if (initializePromise) {
     return initializePromise;
   }
 
-  initializePromise = SocialLogin.initialize({
-    google: {
-      webClientId: clientId,
-      mode: 'online'
-    }
-  }).catch((error) => {
-    initializePromise = null;
-    throw error;
-  });
+  initializePromise = getSocialLoginPlugin()
+    .then((socialLogin) =>
+      socialLogin.initialize({
+        google: {
+          webClientId: clientId,
+          mode: 'online'
+        }
+      })
+    )
+    .catch((error) => {
+      initializePromise = null;
+      throw error;
+    });
 
   return initializePromise;
 }
@@ -50,8 +62,9 @@ export async function requestNativeGoogleIdToken({ clientId }) {
   }
 
   try {
+    const socialLogin = await getSocialLoginPlugin();
     await initializeNativeGoogle(clientId);
-    const result = await SocialLogin.login({
+    const result = await socialLogin.login({
       provider: 'google',
       options: {
         scopes: ['email', 'profile']

@@ -69,20 +69,34 @@ export function persistDailyProductivity(dateKey, tasks) {
   const history = readHistory();
 
   if (!tasks.length) {
-    delete history[dateKey];
-    writeHistory(history);
+    if (history[dateKey]) {
+      delete history[dateKey];
+      writeHistory(history);
+    }
     return history;
   }
 
   const completedCount = tasks.filter((task) => task.isCompleted).length;
   const completionRate = Math.round((completedCount / tasks.length) * 100);
 
-  history[dateKey] = {
+  const nextEntry = {
     completionRate,
     taskCount: tasks.length,
     score: computeProductivityScore(tasks),
     updatedAt: new Date().toISOString()
   };
+
+  const currentEntry = history[dateKey];
+  if (
+    currentEntry &&
+    currentEntry.completionRate === nextEntry.completionRate &&
+    currentEntry.taskCount === nextEntry.taskCount &&
+    currentEntry.score === nextEntry.score
+  ) {
+    return history;
+  }
+
+  history[dateKey] = nextEntry;
   writeHistory(history);
   return history;
 }

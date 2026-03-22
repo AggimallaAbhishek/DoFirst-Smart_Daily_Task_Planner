@@ -4,6 +4,7 @@ import { formatTodayLabel } from '../lib/formatters';
 
 export default function AppShell({ user, onLogout, children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavScrolled, setIsNavScrolled] = useState(false);
   const userLabel = user?.name || user?.email?.split('@')?.[0] || 'User';
   const avatarFallback = userLabel
     .split(' ')
@@ -13,14 +14,20 @@ export default function AppShell({ user, onLogout, children }) {
     .join('');
 
   useEffect(() => {
-    const nav = document.getElementById('nav');
+    let frameId = null;
 
-    if (!nav) {
-      return undefined;
-    }
+    const updateScrollState = () => {
+      frameId = null;
+      const nextScrolled = window.scrollY > 80;
+      setIsNavScrolled((current) => (current === nextScrolled ? current : nextScrolled));
+    };
 
     const handleScroll = () => {
-      nav.classList.toggle('scrolled', window.scrollY > 80);
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(updateScrollState);
     };
 
     handleScroll();
@@ -30,10 +37,14 @@ export default function AppShell({ user, onLogout, children }) {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
 
     return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
@@ -58,9 +69,17 @@ export default function AppShell({ user, onLogout, children }) {
 
   return (
     <div className="planner-page">
-      <nav className="planner-nav" id="nav">
+      <nav className={`planner-nav ${isNavScrolled ? 'scrolled' : ''}`} id="nav">
         <a href="#hero" className="nav-logo" onClick={closeMobileMenu}>
-          <img src="/DoFirst.png" alt="DoFirst logo" className="nav-logo-image" />
+          <img
+            src="/DoFirst.png"
+            alt="DoFirst logo"
+            className="nav-logo-image"
+            width="34"
+            height="34"
+            decoding="async"
+            loading="eager"
+          />
           <span className="nav-logo-wordmark">
             DoFirst<span className="nav-logo-dot">.</span>
           </span>
@@ -101,7 +120,14 @@ export default function AppShell({ user, onLogout, children }) {
           <InstallAppButton />
           <div className="nav-user-card">
             {user?.avatarUrl ? (
-              <img className="nav-user-avatar" src={user.avatarUrl} alt={`${userLabel} avatar`} referrerPolicy="no-referrer" />
+              <img
+                className="nav-user-avatar"
+                src={user.avatarUrl}
+                alt={`${userLabel} avatar`}
+                referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
+              />
             ) : (
               <div className="nav-user-avatar nav-user-avatar-fallback">{avatarFallback || 'U'}</div>
             )}

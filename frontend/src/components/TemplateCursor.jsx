@@ -25,45 +25,64 @@ export default function TemplateCursor() {
     let mouseY = 0;
     let trailX = 0;
     let trailY = 0;
-    let hasInitialPosition = false;
-    let animationFrameId;
+    let hasPointer = false;
+    let animationFrameId = null;
 
-    const TRAIL_FOLLOW_FACTOR = 0.55;
+    const TRAIL_FOLLOW_FACTOR = 0.38;
 
-    const renderFrame = () => {
-      if (!hasInitialPosition) {
-        animationFrameId = window.requestAnimationFrame(renderFrame);
+    const requestRender = () => {
+      if (animationFrameId !== null) {
         return;
       }
 
-      cursor.style.left = `${mouseX}px`;
-      cursor.style.top = `${mouseY}px`;
+      animationFrameId = window.requestAnimationFrame(renderFrame);
+    };
+
+    const renderFrame = () => {
+      animationFrameId = null;
+
+      if (!hasPointer) {
+        return;
+      }
 
       trailX += (mouseX - trailX) * TRAIL_FOLLOW_FACTOR;
       trailY += (mouseY - trailY) * TRAIL_FOLLOW_FACTOR;
 
-      if (Math.abs(mouseX - trailX) < 0.1) {
+      if (Math.abs(mouseX - trailX) < 0.2) {
         trailX = mouseX;
       }
 
-      if (Math.abs(mouseY - trailY) < 0.1) {
+      if (Math.abs(mouseY - trailY) < 0.2) {
         trailY = mouseY;
       }
 
-      trail.style.left = `${trailX}px`;
-      trail.style.top = `${trailY}px`;
-      animationFrameId = window.requestAnimationFrame(renderFrame);
+      cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+      trail.style.transform = `translate3d(${trailX}px, ${trailY}px, 0) translate(-50%, -50%)`;
+
+      if (Math.abs(mouseX - trailX) > 0.2 || Math.abs(mouseY - trailY) > 0.2) {
+        requestRender();
+      }
     };
 
-    const handleMouseMove = (event) => {
+    const handlePointerMove = (event) => {
       mouseX = event.clientX;
       mouseY = event.clientY;
 
-      if (!hasInitialPosition) {
+      if (!hasPointer) {
         trailX = mouseX;
         trailY = mouseY;
-        hasInitialPosition = true;
+        hasPointer = true;
+        cursor.style.opacity = '1';
+        trail.style.opacity = '1';
       }
+
+      requestRender();
+    };
+
+    const handlePointerLeave = () => {
+      hasPointer = false;
+      cursor.style.opacity = '0';
+      trail.style.opacity = '0';
     };
 
     const handleMouseOver = (event) => {
@@ -88,14 +107,18 @@ export default function TemplateCursor() {
       trail.style.height = '36px';
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('pointermove', handlePointerMove, { passive: true });
+    document.addEventListener('pointerleave', handlePointerLeave);
     document.addEventListener('mouseover', handleMouseOver);
     document.addEventListener('mouseout', handleMouseOut);
-    animationFrameId = window.requestAnimationFrame(renderFrame);
 
     return () => {
-      window.cancelAnimationFrame(animationFrameId);
-      document.removeEventListener('mousemove', handleMouseMove);
+      if (animationFrameId !== null) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerleave', handlePointerLeave);
       document.removeEventListener('mouseover', handleMouseOver);
       document.removeEventListener('mouseout', handleMouseOut);
     };

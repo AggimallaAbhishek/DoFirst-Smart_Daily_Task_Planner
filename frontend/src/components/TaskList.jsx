@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { formatEstimatedMinutes } from '../lib/formatters';
 
 const priorityAccent = {
@@ -22,7 +22,37 @@ export default function TaskList({
   hasActiveFilters,
   onResetFilters
 }) {
-  const [draggingTaskId, setDraggingTaskId] = useState(null);
+  const draggingTaskIdRef = useRef(null);
+
+  function handleDragStart(event, taskId) {
+    draggingTaskIdRef.current = taskId;
+    event.currentTarget.classList.add('dragging');
+
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', taskId);
+    }
+  }
+
+  function handleDragEnd(event) {
+    event.currentTarget.classList.remove('dragging');
+    draggingTaskIdRef.current = null;
+  }
+
+  function handleDrop(event, targetTaskId) {
+    event.preventDefault();
+    const draggedTaskId =
+      draggingTaskIdRef.current ||
+      event.dataTransfer?.getData('text/plain') ||
+      null;
+
+    if (!draggedTaskId || draggedTaskId === targetTaskId) {
+      return;
+    }
+
+    onReorder(draggedTaskId, targetTaskId);
+    draggingTaskIdRef.current = null;
+  }
 
   if (tasks.length === 0) {
     return (
@@ -100,20 +130,13 @@ export default function TaskList({
         {tasks.map((task) => (
           <article
             key={task.id}
-            className={`task-item ${task.isCompleted ? 'completed' : ''} ${draggingTaskId === task.id ? 'dragging' : ''}`}
+            className={`task-item ${task.isCompleted ? 'completed' : ''}`}
             data-testid="task-item"
             draggable={!isWorking}
-            onDragEnd={() => setDraggingTaskId(null)}
+            onDragEnd={handleDragEnd}
             onDragOver={(event) => event.preventDefault()}
-            onDragStart={() => setDraggingTaskId(task.id)}
-            onDrop={() => {
-              if (!draggingTaskId || draggingTaskId === task.id) {
-                return;
-              }
-
-              onReorder(draggingTaskId, task.id);
-              setDraggingTaskId(null);
-            }}
+            onDragStart={(event) => handleDragStart(event, task.id)}
+            onDrop={(event) => handleDrop(event, task.id)}
           >
             <div className={`task-priority ${priorityAccent[task.priority]}`} aria-hidden="true" />
 

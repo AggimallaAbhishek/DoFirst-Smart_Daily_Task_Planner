@@ -1,3 +1,4 @@
+const compression = require('compression');
 const cors = require('cors');
 const express = require('express');
 const helmet = require('helmet');
@@ -47,25 +48,52 @@ function createCorsOptions(config) {
   };
 }
 
-function createHealthHandler({ pool, startedAt }) {
-  return async (request, response) => {
-    try {
-      await pool.query('SELECT 1');
+function createHealthHandler({ pool, startedAt, cacheTtlMs }) {
+  let cachedAt = 0;
+  let cachedResult = null;
+  let pendingCheck = null;
 
-      return response.status(200).json({
-        status: 'ok',
-        uptimeMs: Date.now() - startedAt,
-        database: 'connected',
-        version: process.env.npm_package_version || '1.0.0'
-      });
-    } catch (error) {
-      return response.status(503).json({
-        status: 'degraded',
-        uptimeMs: Date.now() - startedAt,
-        database: 'unavailable',
-        version: process.env.npm_package_version || '1.0.0'
-      });
+  function buildHealthPayload(result) {
+    return {
+      status: result.status,
+      uptimeMs: Date.now() - startedAt,
+      database: result.database,
+      version: process.env.npm_package_version || '1.0.0'
+    };
+  }
+
+  async function resolveHealthResult() {
+    if (!pendingCheck) {
+      pendingCheck = pool
+        .query('SELECT 1')
+        .then(() => ({
+          statusCode: 200,
+          status: 'ok',
+          database: 'connected'
+        }))
+        .catch(() => ({
+          statusCode: 503,
+          status: 'degraded',
+          database: 'unavailable'
+        }))
+        .finally(() => {
+          pendingCheck = null;
+        });
     }
+
+    return pendingCheck;
+  }
+
+  return async (request, response) => {
+    const now = Date.now();
+    if (cachedResult && now - cachedAt < cacheTtlMs) {
+      return response.status(cachedResult.statusCode).json(buildHealthPayload(cachedResult));
+    }
+
+    const nextResult = await resolveHealthResult();
+    cachedResult = nextResult;
+    cachedAt = Date.now();
+    return response.status(nextResult.statusCode).json(buildHealthPayload(nextResult));
   };
 }
 
@@ -128,6 +156,7 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     })
   );
   app.use(cors(createCorsOptions(config)));
+  app.use(compression({ threshold: 1024 }));
   app.use((error, request, response, next) => {
     if (error?.message !== 'Not allowed by CORS.') {
       next(error);
@@ -168,7 +197,7 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     })
   );
   app.get('/health/live', createLivenessHandler({ startedAt }));
-  app.get('/health', createHealthHandler({ pool, startedAt }));
+  app.get('/health', createHealthHandler({ pool, startedAt, cacheTtlMs: config.healthCheckCacheMs }));
   app.use(
     '/api/auth',
     createAuthRouter({

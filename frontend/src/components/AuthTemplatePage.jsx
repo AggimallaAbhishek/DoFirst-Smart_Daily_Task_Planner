@@ -85,30 +85,60 @@ export default function AuthTemplatePage({
       return undefined;
     }
 
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      return undefined;
+    }
+
     const orbs = panel.querySelectorAll('.authx-geo-orb');
-    const handleMouseMove = (event) => {
-      const bounds = panel.getBoundingClientRect();
-      const x = (event.clientX - bounds.left) / bounds.width;
-      const y = (event.clientY - bounds.top) / bounds.height;
+    let frameId = null;
+    let pointerX = 0.5;
+    let pointerY = 0.5;
+
+    const render = () => {
+      frameId = null;
 
       orbs.forEach((orb, index) => {
         const factor = (index + 1) * 18;
-        const dx = (x - 0.5) * factor;
-        const dy = (y - 0.5) * factor;
+        const dx = (pointerX - 0.5) * factor;
+        const dy = (pointerY - 0.5) * factor;
         orb.style.transform = `translate(${dx}px, ${dy}px)`;
       });
     };
 
+    const requestRender = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(render);
+    };
+
+    const handleMouseMove = (event) => {
+      const bounds = panel.getBoundingClientRect();
+      pointerX = (event.clientX - bounds.left) / bounds.width;
+      pointerY = (event.clientY - bounds.top) / bounds.height;
+      requestRender();
+    };
+
     const handleMouseLeave = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+
       orbs.forEach((orb) => {
         orb.style.transform = '';
       });
     };
 
-    panel.addEventListener('mousemove', handleMouseMove);
+    panel.addEventListener('mousemove', handleMouseMove, { passive: true });
     panel.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+
       panel.removeEventListener('mousemove', handleMouseMove);
       panel.removeEventListener('mouseleave', handleMouseLeave);
     };
@@ -218,7 +248,15 @@ export default function AuthTemplatePage({
 
           <Link className="authx-brand" to="/">
             <div className="authx-brand-mark">
-              <img className="authx-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
+              <img
+                className="authx-brand-logo"
+                src="/DoFirst.png"
+                alt="DoFirst logo"
+                width="352"
+                height="192"
+                decoding="async"
+                loading="eager"
+              />
             </div>
             <span className="authx-brand-name">DoFirst</span>
           </Link>
@@ -283,7 +321,15 @@ export default function AuthTemplatePage({
 
           <Link className="authx-mobile-brand" to="/">
             <div className="authx-mobile-brand-mark">
-              <img className="authx-mobile-brand-logo" src="/DoFirst.png" alt="DoFirst logo" />
+              <img
+                className="authx-mobile-brand-logo"
+                src="/DoFirst.png"
+                alt="DoFirst logo"
+                width="352"
+                height="192"
+                decoding="async"
+                loading="eager"
+              />
             </div>
             <span className="authx-mobile-brand-name">DoFirst</span>
           </Link>

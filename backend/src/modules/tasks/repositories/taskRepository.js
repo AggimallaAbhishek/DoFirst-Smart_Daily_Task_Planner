@@ -5,6 +5,7 @@ const PRIORITY_SQL = `
     ELSE 1
   END
 `;
+const TASK_COLUMNS = 'id, user_id, title, priority, estimated_minutes, is_completed, task_date, created_at';
 
 async function countTasksForDate(pool, { userId, taskDate }) {
   const result = await pool.query(
@@ -20,7 +21,7 @@ async function createTask(pool, { userId, title, priority, estimatedMinutes, tas
     `
       INSERT INTO tasks (user_id, title, priority, estimated_minutes, task_date)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
+      RETURNING ${TASK_COLUMNS}
     `,
     [userId, title.trim(), priority, estimatedMinutes, taskDate]
   );
@@ -31,7 +32,7 @@ async function createTask(pool, { userId, title, priority, estimatedMinutes, tas
 async function listTasksForDate(pool, { userId, taskDate }) {
   const result = await pool.query(
     `
-      SELECT *
+      SELECT ${TASK_COLUMNS}
       FROM tasks
       WHERE user_id = $1 AND task_date = $2
       ORDER BY is_completed ASC, ${PRIORITY_SQL} DESC, created_at ASC
@@ -43,7 +44,7 @@ async function listTasksForDate(pool, { userId, taskDate }) {
 }
 
 async function findTaskById(pool, taskId) {
-  const result = await pool.query('SELECT * FROM tasks WHERE id = $1 LIMIT 1', [taskId]);
+  const result = await pool.query(`SELECT ${TASK_COLUMNS} FROM tasks WHERE id = $1 LIMIT 1`, [taskId]);
   return result.rows[0] || null;
 }
 
@@ -69,7 +70,7 @@ async function updateTask(pool, { taskId, updates }) {
       UPDATE tasks
       SET ${assignments.join(', ')}
       WHERE id = $${values.length}
-      RETURNING *
+      RETURNING ${TASK_COLUMNS}
     `,
     values
   );
@@ -85,7 +86,7 @@ async function deleteTask(pool, taskId) {
 async function findSuggestion(pool, { userId, taskDate }) {
   const result = await pool.query(
     `
-      SELECT *
+      SELECT ${TASK_COLUMNS}
       FROM tasks
       WHERE user_id = $1
         AND task_date = $2

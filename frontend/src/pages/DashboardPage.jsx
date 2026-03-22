@@ -9,7 +9,6 @@ import { useAuth } from '../features/auth/useAuth';
 import {
   createTask,
   deleteTask,
-  getSuggestion,
   getTasks,
   updateTask
 } from '../features/tasks/taskService';
@@ -22,6 +21,11 @@ import {
 } from '../lib/productivity';
 
 const TASK_ORDER_STORAGE_PREFIX = 'smart-daily-planner-order-';
+const PRIORITY_RANK = {
+  high: 3,
+  medium: 2,
+  low: 1
+};
 
 function getOrderStorageKey(taskDate) {
   return `${TASK_ORDER_STORAGE_PREFIX}${taskDate}`;
@@ -40,11 +44,42 @@ function saveStoredTaskOrder(taskDate, order) {
   window.sessionStorage.setItem(getOrderStorageKey(taskDate), JSON.stringify(order));
 }
 
+function isHigherSuggestionPriority(candidate, current) {
+  if (!current) {
+    return true;
+  }
+
+  const candidatePriority = PRIORITY_RANK[candidate.priority] || 0;
+  const currentPriority = PRIORITY_RANK[current.priority] || 0;
+
+  if (candidatePriority !== currentPriority) {
+    return candidatePriority > currentPriority;
+  }
+
+  const candidateCreatedAt = Number.isNaN(Date.parse(candidate.createdAt))
+    ? Number.MAX_SAFE_INTEGER
+    : Date.parse(candidate.createdAt);
+  const currentCreatedAt = Number.isNaN(Date.parse(current.createdAt))
+    ? Number.MAX_SAFE_INTEGER
+    : Date.parse(current.createdAt);
+
+  return candidateCreatedAt < currentCreatedAt;
+}
+
+function selectSuggestionTask(tasks) {
+  return tasks.reduce((currentSuggestion, task) => {
+    if (task.isCompleted) {
+      return currentSuggestion;
+    }
+
+    return isHigherSuggestionPriority(task, currentSuggestion) ? task : currentSuggestion;
+  }, null);
+}
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [selectedDate, setSelectedDate] = useState(getTodayDateKey);
   const [tasks, setTasks] = useState([]);
-  const [suggestion, setSuggestion] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
@@ -56,9 +91,8 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
 
   async function loadDashboard(taskDate) {
-    const [loadedTasks, loadedSuggestion] = await Promise.all([getTasks(taskDate), getSuggestion(taskDate)]);
+    const loadedTasks = await getTasks(taskDate);
     setTasks(loadedTasks);
-    setSuggestion(loadedSuggestion);
   }
 
   useEffect(() => {
@@ -78,9 +112,19 @@ export default function DashboardPage() {
 
     setManualOrder((current) => {
       const taskIds = tasks.map((task) => task.id);
-      const filteredCurrent = current.filter((taskId) => taskIds.includes(taskId));
-      const missing = taskIds.filter((taskId) => !filteredCurrent.includes(taskId));
+      const taskIdSet = new Set(taskIds);
+      const filteredCurrent = current.filter((taskId) => taskIdSet.has(taskId));
+      const filteredCurrentSet = new Set(filteredCurrent);
+      const missing = taskIds.filter((taskId) => !filteredCurrentSet.has(taskId));
       const merged = [...filteredCurrent, ...missing];
+
+      if (
+        merged.length === current.length &&
+        merged.every((taskId, index) => taskId === current[index])
+      ) {
+        return current;
+      }
+
       saveStoredTaskOrder(selectedDate, merged);
       return merged;
     });
@@ -93,10 +137,13 @@ export default function DashboardPage() {
 
     const byId = new Map(tasks.map((task) => [task.id, task]));
     const ordered = manualOrder.map((taskId) => byId.get(taskId)).filter(Boolean);
-    const missing = tasks.filter((task) => !manualOrder.includes(task.id));
+    const manualOrderSet = new Set(manualOrder);
+    const missing = tasks.filter((task) => !manualOrderSet.has(task.id));
 
     return [...ordered, ...missing];
   }, [tasks, manualOrder]);
+
+  const suggestion = useMemo(() => selectSuggestionTask(tasks), [tasks]);
 
   const filteredTasks = useMemo(() => {
     const normalizedSearch = searchValue.trim().toLowerCase();
@@ -142,17 +189,13 @@ export default function DashboardPage() {
       try {
         setError('');
         setIsLoading(true);
-        const [loadedTasks, loadedSuggestion] = await Promise.all([
-          getTasks(selectedDate),
-          getSuggestion(selectedDate)
-        ]);
+        const loadedTasks = await getTasks(selectedDate);
 
         if (!isMounted) {
           return;
         }
 
         setTasks(loadedTasks);
-        setSuggestion(loadedSuggestion);
       } catch (loadError) {
         if (loadError.response?.status === 401) {
           logout();

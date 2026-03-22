@@ -113,6 +113,7 @@ function resolveConfig(source = process.env) {
     rateLimitWindowMs: parsePositiveInteger(source.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     requestTimeoutMs: parsePositiveInteger(source.REQUEST_TIMEOUT_MS, 30 * 1000),
     slowRequestThresholdMs: parsePositiveInteger(source.SLOW_REQUEST_THRESHOLD_MS, 1000),
+    healthCheckCacheMs: parsePositiveInteger(source.HEALTH_CHECK_CACHE_MS, 3000),
     trustProxy: parseTrustProxy(source.TRUST_PROXY, isProduction ? 1 : false),
     dbSslRejectUnauthorized: parseBoolean(source.DB_SSL_REJECT_UNAUTHORIZED, false),
     dbPoolMax: parsePositiveInteger(source.DB_POOL_MAX, 10),
