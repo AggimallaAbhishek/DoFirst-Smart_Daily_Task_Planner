@@ -88,8 +88,17 @@ jobs:
 
       - name: Build Android debug APK
         run: |
+          set -euo pipefail
           cd frontend/android
           ./gradlew --no-daemon assembleDebug --stacktrace --info | tee ../gradle-build.log
+
+      - name: Inspect APK outputs
+        if: always()
+        run: |
+          echo "Listing APK outputs..."
+          ls -la frontend/android/app/build/outputs/apk || true
+          ls -la frontend/android/app/build/outputs/apk/debug || true
+          find frontend/android/app/build/outputs -name "*.apk" -type f || true
 
       - name: Upload Gradle build log
         if: always()
@@ -103,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dofirst-debug-apk
-          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
+          path: frontend/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: Upload Android build outputs
@@ -119,4 +128,4 @@ jobs:
           echo "APK build completed." >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Artifact: dofirst-debug-apk" >> "$GITHUB_STEP_SUMMARY"
-          echo "File: frontend/android/app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "File(s): frontend/android/app/build/outputs/apk/debug/*.apk" >> "$GITHUB_STEP_SUMMARY"
