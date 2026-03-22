@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from '../components/AppShell';
 import DashboardToolbar from '../components/DashboardToolbar';
 import ProgressSummary from '../components/ProgressSummary';
@@ -90,6 +90,7 @@ export default function DashboardPage() {
   const [streakCount, setStreakCount] = useState(0);
   const [error, setError] = useState('');
   const selectedDateRef = useRef(selectedDate);
+  const deferredSearchValue = useDeferredValue(searchValue);
 
   async function loadDashboard(taskDate) {
     const loadedTasks = await getTasks(taskDate);
@@ -160,7 +161,7 @@ export default function DashboardPage() {
   const suggestion = useMemo(() => selectSuggestionTask(tasks), [tasks]);
 
   const filteredTasks = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase();
+    const normalizedSearch = deferredSearchValue.trim().toLowerCase();
 
     return orderedTasks.filter((task) => {
       if (focusMode && (task.isCompleted || task.priority === 'low')) {
@@ -185,11 +186,14 @@ export default function DashboardPage() {
 
       return true;
     });
-  }, [focusMode, orderedTasks, priorityFilter, searchValue, statusFilter]);
+  }, [deferredSearchValue, focusMode, orderedTasks, priorityFilter, statusFilter]);
 
   const hasActiveFilters = focusMode || searchValue.trim() || statusFilter !== 'all' || priorityFilter !== 'all';
-  const pendingTasksCount = orderedTasks.filter((task) => !task.isCompleted).length;
-  const productivityScore = computeProductivityScore(orderedTasks);
+  const pendingTasksCount = useMemo(
+    () => orderedTasks.filter((task) => !task.isCompleted).length,
+    [orderedTasks]
+  );
+  const productivityScore = useMemo(() => computeProductivityScore(orderedTasks), [orderedTasks]);
 
   useEffect(() => {
     const history = persistDailyProductivity(selectedDate, orderedTasks);

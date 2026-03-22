@@ -6,11 +6,15 @@ export async function registerUser(credentials) {
 }
 
 export async function loginUser(credentials) {
-  const response = await httpClient.post('/api/auth/login', credentials);
+  const response = await httpClient.post('/api/auth/login', credentials, {
+    retryable: true
+  });
   return response.data;
 }
 
 export async function loginWithGoogle(payload) {
-  const response = await httpClient.post('/api/auth/google', payload);
+  const response = await httpClient.post('/api/auth/google', payload, {
+    retryable: true
+  });
   return response.data;
 }

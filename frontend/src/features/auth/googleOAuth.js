@@ -64,7 +64,7 @@ function loadGoogleScript() {
 
 export async function requestGoogleAuthCode({ clientId, redirectUri: requestedRedirectUri }) {
   if (!clientId) {
-    throw new Error('Google sign-in is not configured. Add VITE_GOOGLE_CLIENT_ID.');
+    throw new Error('Google sign-in is not configured. Set VITE_GOOGLE_WEB_CLIENT_ID or VITE_GOOGLE_CLIENT_ID.');
   }
 
   const configuredRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI?.trim();

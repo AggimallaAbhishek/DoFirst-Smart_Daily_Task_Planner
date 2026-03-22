@@ -61,6 +61,33 @@ describe('googleOAuthClient', () => {
     });
   });
 
+  test('verifies id token against all configured oauth audiences', async () => {
+    const client = createGoogleOAuthClient({
+      config: {
+        googleOauthClientId: 'web-client-id',
+        googleOauthAllowedAudiences: ['web-client-id', 'android-client-id'],
+        googleOauthClientSecret: ''
+      }
+    });
+
+    mockVerifyIdToken.mockResolvedValue({
+      getPayload: () => ({
+        email: 'native-user@example.com',
+        email_verified: true,
+        name: 'Native User',
+        picture: 'https://example.com/native-avatar.png',
+        sub: 'native-google-subject'
+      })
+    });
+
+    await client.getProfileFromIdToken('native-id-token');
+
+    expect(mockVerifyIdToken).toHaveBeenCalledWith({
+      idToken: 'native-id-token',
+      audience: ['web-client-id', 'android-client-id']
+    });
+  });
+
   test('exchanges auth code for a verified google profile', async () => {
     const client = createGoogleOAuthClient({
       config: {

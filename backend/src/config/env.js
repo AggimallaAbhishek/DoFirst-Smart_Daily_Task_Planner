@@ -128,9 +128,15 @@ function resolveConfig(source = process.env) {
     awsSecretsManagerSecretId: source.AWS_SECRETS_MANAGER_SECRET_ID || '',
     sentryDsn: source.SENTRY_DSN || '',
     googleOauthClientId: source.GOOGLE_OAUTH_CLIENT_ID || '',
+    googleOauthAdditionalClientIds: toAllowedOrigins(source.GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS, ''),
     googleOauthClientSecret: source.GOOGLE_OAUTH_CLIENT_SECRET || '',
     googleOauthRedirectUri: source.GOOGLE_OAUTH_REDIRECT_URI || 'postmessage'
   };
+
+  config.googleOauthAllowedAudiences = mergeOrigins(
+    [config.googleOauthClientId],
+    config.googleOauthAdditionalClientIds
+  );
 
   if (!config.databaseUrl) {
     throw new Error('DATABASE_URL must be defined.');

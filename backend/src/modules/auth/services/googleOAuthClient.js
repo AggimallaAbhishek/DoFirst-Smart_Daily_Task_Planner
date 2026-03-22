@@ -1,5 +1,17 @@
 const { OAuth2Client } = require('google-auth-library');
 
+function resolveAllowedAudiences(config) {
+  const configuredAudiences = Array.isArray(config.googleOauthAllowedAudiences)
+    ? config.googleOauthAllowedAudiences.filter(Boolean)
+    : [];
+
+  if (configuredAudiences.length > 0) {
+    return configuredAudiences.length === 1 ? configuredAudiences[0] : configuredAudiences;
+  }
+
+  return config.googleOauthClientId;
+}
+
 function createGoogleOAuthClient({ config }) {
   if (!config.googleOauthClientId) {
     return null;
@@ -12,7 +24,7 @@ function createGoogleOAuthClient({ config }) {
   async function verifyProfileFromIdToken(idToken) {
     const ticket = await oauthClient.verifyIdToken({
       idToken,
-      audience: config.googleOauthClientId
+      audience: resolveAllowedAudiences(config)
     });
     const payload = ticket.getPayload();
 

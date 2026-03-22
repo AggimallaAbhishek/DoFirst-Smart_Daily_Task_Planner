@@ -14,17 +14,21 @@ GitHub Variables (`Settings -> Secrets and variables -> Actions -> Variables`):
 
 GitHub Secret (`Settings -> Secrets and variables -> Actions -> Secrets`):
 
-- `VITE_GOOGLE_CLIENT_ID=<your-google-oauth-web-client-id>`
+- `VITE_GOOGLE_CLIENT_ID=<default-google-oauth-client-id>`
+- Optional overrides:
+  - `VITE_GOOGLE_WEB_CLIENT_ID=<web-client-id>`
+  - `VITE_GOOGLE_NATIVE_CLIENT_ID=<android-or-native-client-id>`
 
 ## 2) Google Cloud OAuth setup required for APK
 
 Native Google sign-in in APK requires both OAuth client types:
 
 1. Web client (used by backend verification):
-   - Use this value as `VITE_GOOGLE_CLIENT_ID` and backend `GOOGLE_OAUTH_CLIENT_ID`.
+   - Use this value as `VITE_GOOGLE_WEB_CLIENT_ID` (or `VITE_GOOGLE_CLIENT_ID`) and backend `GOOGLE_OAUTH_CLIENT_ID`.
 2. Android client:
    - Package name: `com.dofirst.smartdailyplanner`
    - SHA-1: signing certificate SHA-1 used to sign the APK
+   - Add this Android client ID to backend `GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS` when token audience differs from web client.
 
 To check SHA-1 from an already-built APK:
 

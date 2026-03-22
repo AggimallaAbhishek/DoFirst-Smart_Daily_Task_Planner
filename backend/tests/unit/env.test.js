@@ -64,10 +64,15 @@ describe('resolveConfig', () => {
       DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
       JWT_SECRET: 'prod-secret',
       FRONTEND_ORIGIN: 'https://app.example.com',
-      GOOGLE_OAUTH_REDIRECT_URI: 'https://app.example.com/auth/google/callback'
+      GOOGLE_OAUTH_REDIRECT_URI: 'https://app.example.com/auth/google/callback',
+      GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS: 'android-client-id,android-client-id-2'
     });
 
     expect(config.googleOauthRedirectUri).toBe('https://app.example.com/auth/google/callback');
+    expect(config.googleOauthAllowedAudiences).toEqual([
+      'android-client-id',
+      'android-client-id-2'
+    ]);
   });
 
   test('supports disabling native app origins', () => {
@@ -80,5 +85,18 @@ describe('resolveConfig', () => {
     });
 
     expect(config.allowedOrigins).toEqual(['https://app.example.com']);
+  });
+
+  test('includes primary and additional google oauth audiences when provided', () => {
+    const config = resolveConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
+      JWT_SECRET: 'prod-secret',
+      ALLOWED_ORIGINS: 'https://app.example.com',
+      GOOGLE_OAUTH_CLIENT_ID: 'web-client-id',
+      GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS: 'android-client-id,android-client-id'
+    });
+
+    expect(config.googleOauthAllowedAudiences).toEqual(['web-client-id', 'android-client-id']);
   });
 });

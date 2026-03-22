@@ -52,6 +52,7 @@ Set backend environment variables in Vercel:
 - `API_RATE_LIMIT_MAX=100`
 - `RATE_LIMIT_WINDOW_MS=900000`
 - `GOOGLE_OAUTH_CLIENT_ID=<google-client-id>`
+- `GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS=<comma-separated-android-or-extra-client-ids>` (optional, recommended when APK/native client differs)
 - `GOOGLE_OAUTH_CLIENT_SECRET=<google-client-secret>`
 - Optional: `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_MANAGER_SECRET_ID`
 
@@ -74,7 +75,9 @@ vercel --prod
 Set frontend environment variables in Vercel:
 
 - `VITE_API_URL=https://<your-backend-vercel-domain>`
-- `VITE_GOOGLE_CLIENT_ID=<google-client-id>`
+- `VITE_GOOGLE_CLIENT_ID=<default-google-client-id>`
+- `VITE_GOOGLE_WEB_CLIENT_ID=<web-client-id>` (optional override)
+- `VITE_GOOGLE_NATIVE_CLIENT_ID=<native-client-id>` (optional override for APK/native runtime)
 
 ### 3) Google OAuth production setup
 

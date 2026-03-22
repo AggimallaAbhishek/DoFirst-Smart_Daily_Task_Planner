@@ -58,7 +58,9 @@ export async function requestNativeGoogleIdToken({ clientId }) {
   }
 
   if (!clientId) {
-    throw new Error('Google sign-in is not configured. Add VITE_GOOGLE_CLIENT_ID.');
+    throw new Error(
+      'Google sign-in is not configured. Set VITE_GOOGLE_NATIVE_CLIENT_ID (or VITE_GOOGLE_ANDROID_CLIENT_ID / VITE_GOOGLE_CLIENT_ID).'
+    );
   }
 
   try {

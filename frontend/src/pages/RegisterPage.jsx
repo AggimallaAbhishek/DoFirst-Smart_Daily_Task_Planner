@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthTemplatePage from '../components/AuthTemplatePage';
+import { resolveGoogleAuthConfig } from '../features/auth/googleClientConfig';
 import { requestGoogleAuthCode } from '../features/auth/googleOAuth';
 import { isNativeRuntime, requestNativeGoogleIdToken } from '../features/auth/nativeGoogleOAuth';
 import { useAuth } from '../features/auth/useAuth';
@@ -10,8 +11,7 @@ export default function RegisterPage() {
   const { register, loginWithGoogle, getApiErrorMessage } = useAuth();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const googleRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+  const googleConfig = resolveGoogleAuthConfig();
 
   async function handleSubmit(credentials) {
     setError('');
@@ -37,19 +37,19 @@ export default function RegisterPage() {
     try {
       if (isNativeRuntime()) {
         const idToken = await requestNativeGoogleIdToken({
-          clientId: googleClientId
+          clientId: googleConfig.nativeClientId
         });
         await loginWithGoogle({ idToken });
       } else {
         const code = await requestGoogleAuthCode({
-          clientId: googleClientId,
-          redirectUri: googleRedirectUri
+          clientId: googleConfig.webClientId,
+          redirectUri: googleConfig.redirectUri
         });
         await loginWithGoogle({ code });
       }
       navigate('/', { replace: true });
     } catch (googleError) {
-      throw new Error(getApiErrorMessage(googleError, 'Unable to sign in with Google.'));
+      setError(getApiErrorMessage(googleError, 'Unable to sign in with Google.'));
     } finally {
       setIsSubmitting(false);
     }
