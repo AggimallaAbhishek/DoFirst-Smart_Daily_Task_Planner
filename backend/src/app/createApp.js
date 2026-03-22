@@ -131,7 +131,8 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
       deleteTaskForUser: (payload) => taskRepository.deleteTaskForUser(pool, payload),
       findSuggestion: (payload) => taskRepository.findSuggestion(pool, payload)
     },
-    logger
+    logger,
+    readCacheTtlMs: config.taskReadCacheTtlMs
   });
   const authController = createAuthController({
     authService,

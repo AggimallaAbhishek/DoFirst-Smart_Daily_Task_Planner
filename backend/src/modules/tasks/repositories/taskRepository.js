@@ -116,8 +116,11 @@ async function deleteTask(pool, taskId) {
 }
 
 async function deleteTaskForUser(pool, { userId, taskId }) {
-  const result = await pool.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2', [taskId, userId]);
-  return result.rowCount;
+  const result = await pool.query(
+    'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id, task_date',
+    [taskId, userId]
+  );
+  return result.rows[0] || null;
 }
 
 async function findSuggestion(pool, { userId, taskDate }) {
