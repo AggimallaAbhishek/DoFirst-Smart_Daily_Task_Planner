@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { formatEstimatedMinutes } from '../lib/formatters';
 
 const priorityAccent = {
@@ -7,7 +7,7 @@ const priorityAccent = {
   low: 'task-priority-low'
 };
 
-export default function TaskList({
+const TaskList = memo(function TaskList({
   tasks,
   onToggleComplete,
   onDelete,
@@ -178,4 +178,6 @@ export default function TaskList({
       </div>
     </section>
   );
-}
+});
+
+export default TaskList;

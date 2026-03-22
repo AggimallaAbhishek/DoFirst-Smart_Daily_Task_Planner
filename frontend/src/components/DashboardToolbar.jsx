@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { buildDateWindow, formatBoardDate } from '../lib/datePlanner';
 
-export default function DashboardToolbar({
+const DashboardToolbar = memo(function DashboardToolbar({
   selectedDate,
   onSelectDate,
   onShiftDate,
@@ -71,4 +72,6 @@ export default function DashboardToolbar({
       </div>
     </section>
   );
-}
+});
+
+export default DashboardToolbar;

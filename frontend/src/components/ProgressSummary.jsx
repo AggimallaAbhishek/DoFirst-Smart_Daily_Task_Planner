@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { formatEstimatedMinutes } from '../lib/formatters';
 
-export default function ProgressSummary({ tasks, productivityScore, streakCount, focusMode }) {
+const ProgressSummary = memo(function ProgressSummary({ tasks, productivityScore, streakCount, focusMode }) {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((task) => task.isCompleted).length;
   const remainingMinutes = tasks
@@ -48,4 +49,6 @@ export default function ProgressSummary({ tasks, productivityScore, streakCount,
       ) : null}
     </section>
   );
-}
+});
+
+export default ProgressSummary;

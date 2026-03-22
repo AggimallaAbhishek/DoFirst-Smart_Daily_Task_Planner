@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useNavigate } from 'react-router-dom';
 import AuthTemplatePage from '../components/AuthTemplatePage';
 import { resolveGoogleAuthConfig } from '../features/auth/googleClientConfig';
-import { requestGoogleAuthCode } from '../features/auth/googleOAuth';
-import { isNativeRuntime, requestNativeGoogleIdToken } from '../features/auth/nativeGoogleOAuth';
 import { useAuth } from '../features/auth/useAuth';
 
 export default function RegisterPage() {
@@ -11,7 +10,7 @@ export default function RegisterPage() {
   const { register, loginWithGoogle, getApiErrorMessage } = useAuth();
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const googleConfig = resolveGoogleAuthConfig();
+  const googleConfig = useMemo(() => resolveGoogleAuthConfig(), []);
 
   async function handleSubmit(credentials) {
     setError('');
@@ -35,12 +34,14 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      if (isNativeRuntime()) {
+      if (Capacitor.isNativePlatform()) {
+        const { requestNativeGoogleIdToken } = await import('../features/auth/nativeGoogleOAuth');
         const idToken = await requestNativeGoogleIdToken({
           clientId: googleConfig.nativeClientId
         });
         await loginWithGoogle({ idToken });
       } else {
+        const { requestGoogleAuthCode } = await import('../features/auth/googleOAuth');
         const code = await requestGoogleAuthCode({
           clientId: googleConfig.webClientId,
           redirectUri: googleConfig.redirectUri

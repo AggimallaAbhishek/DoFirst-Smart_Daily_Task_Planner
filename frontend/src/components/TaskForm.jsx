@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 function buildInitialForm(taskDate) {
   return {
@@ -9,7 +9,7 @@ function buildInitialForm(taskDate) {
   };
 }
 
-export default function TaskForm({ onSubmit, taskCount, isSubmitting, selectedDate }) {
+const TaskForm = memo(function TaskForm({ onSubmit, taskCount, isSubmitting, selectedDate }) {
   const [form, setForm] = useState(() => buildInitialForm(selectedDate));
   const [error, setError] = useState('');
   const limitReached = taskCount >= 5;
@@ -147,4 +147,6 @@ export default function TaskForm({ onSubmit, taskCount, isSubmitting, selectedDa
       </form>
     </section>
   );
-}
+});
+
+export default TaskForm;

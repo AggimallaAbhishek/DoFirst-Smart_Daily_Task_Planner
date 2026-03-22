@@ -194,12 +194,15 @@ export default function DashboardPage() {
     });
   }, [deferredSearchValue, focusMode, orderedTasks, priorityFilter, statusFilter]);
 
-  const hasActiveFilters = focusMode || searchValue.trim() || statusFilter !== 'all' || priorityFilter !== 'all';
   const pendingTasksCount = useMemo(
     () => orderedTasks.filter((task) => !task.isCompleted).length,
     [orderedTasks]
   );
   const productivityScore = useMemo(() => computeProductivityScore(orderedTasks), [orderedTasks]);
+  const hasActiveFilters = useMemo(
+    () => Boolean(focusMode || searchValue.trim() || statusFilter !== 'all' || priorityFilter !== 'all'),
+    [focusMode, searchValue, statusFilter, priorityFilter]
+  );
 
   useEffect(() => {
     const history = persistDailyProductivity(selectedDate, orderedTasks);
@@ -257,7 +260,7 @@ export default function DashboardPage() {
     };
   }, [loadDashboard, logout, selectedDate]);
 
-  function handleReorder(draggedTaskId, targetTaskId) {
+  const handleReorder = useCallback((draggedTaskId, targetTaskId) => {
     setManualOrder((current) => {
       const draft = current.length ? [...current] : orderedTasks.map((task) => task.id);
       const sourceIndex = draft.indexOf(draggedTaskId);
@@ -281,9 +284,9 @@ export default function DashboardPage() {
       saveStoredTaskOrder(selectedDate, draft);
       return draft;
     });
-  }
+  }, [orderedTasks, selectedDate]);
 
-  async function handleReminder() {
+  const handleReminder = useCallback(async () => {
     if (pendingTasksCount === 0) {
       return;
     }
@@ -309,9 +312,9 @@ export default function DashboardPage() {
         ? `${pendingTasksCount} task(s) pending. Start with: ${topTask.title}`
         : `You have ${pendingTasksCount} pending task(s).`
     });
-  }
+  }, [orderedTasks, pendingTasksCount]);
 
-  async function handleMutation(action, fallbackMessage, applyLocalUpdate) {
+  const handleMutation = useCallback(async (action, fallbackMessage, applyLocalUpdate) => {
     setError('');
     setIsMutating(true);
     const requestDate = selectedDateRef.current;
@@ -337,7 +340,75 @@ export default function DashboardPage() {
     } finally {
       setIsMutating(false);
     }
-  }
+  }, [loadDashboard, logout]);
+
+  const handleSelectDate = useCallback((value) => {
+    setSelectedDate(value);
+  }, []);
+
+  const handleShiftDate = useCallback((offset) => {
+    setSelectedDate((current) => shiftDate(current, offset));
+  }, []);
+
+  const handleJumpToToday = useCallback(() => {
+    setSelectedDate(getTodayDateKey());
+  }, []);
+
+  const handleToggleFocusMode = useCallback(() => {
+    setFocusMode((current) => !current);
+  }, []);
+
+  const handleCreateTask = useCallback(
+    (payload) =>
+      handleMutation(
+        () => createTask(payload),
+        'Unable to add the task right now.',
+        (currentTasks, createdTask) => [...currentTasks, createdTask]
+      ),
+    [handleMutation]
+  );
+
+  const handleToggleTaskCompletion = useCallback(
+    (task) =>
+      handleMutation(
+        () => updateTask(task.id, { isCompleted: !task.isCompleted }),
+        'Unable to update the task.',
+        (currentTasks, updatedTask) =>
+          currentTasks.map((currentTask) =>
+            currentTask.id === updatedTask.id ? updatedTask : currentTask
+          )
+      ),
+    [handleMutation]
+  );
+
+  const handleDeleteTask = useCallback(
+    (task) =>
+      handleMutation(
+        () => deleteTask(task.id),
+        'Unable to delete the task.',
+        (currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== task.id)
+      ),
+    [handleMutation]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    setFocusMode(false);
+    setSearchValue('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+  }, []);
+
+  const handleSearchChange = useCallback((value) => {
+    setSearchValue(value);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((value) => {
+    setStatusFilter(value);
+  }, []);
+
+  const handlePriorityFilterChange = useCallback((value) => {
+    setPriorityFilter(value);
+  }, []);
 
   if (isLoading) {
     return (
@@ -352,11 +423,11 @@ export default function DashboardPage() {
       <section className="planner-section">
         <DashboardToolbar
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          onShiftDate={(offset) => setSelectedDate((current) => shiftDate(current, offset))}
-          onJumpToToday={() => setSelectedDate(getTodayDateKey())}
+          onSelectDate={handleSelectDate}
+          onShiftDate={handleShiftDate}
+          onJumpToToday={handleJumpToToday}
           focusMode={focusMode}
-          onToggleFocus={() => setFocusMode((current) => !current)}
+          onToggleFocus={handleToggleFocusMode}
           onSendReminder={handleReminder}
           pendingTasksCount={pendingTasksCount}
         />
@@ -387,13 +458,7 @@ export default function DashboardPage() {
             taskCount={orderedTasks.length}
             isSubmitting={isMutating}
             selectedDate={selectedDate}
-            onSubmit={(payload) =>
-              handleMutation(
-                () => createTask(payload),
-                'Unable to add the task right now.',
-                (currentTasks, createdTask) => [...currentTasks, createdTask]
-              )
-            }
+            onSubmit={handleCreateTask}
           />
         </div>
 
@@ -401,37 +466,17 @@ export default function DashboardPage() {
           <TaskList
             tasks={filteredTasks}
             isWorking={isMutating}
-            onToggleComplete={(task) =>
-              handleMutation(
-                () => updateTask(task.id, { isCompleted: !task.isCompleted }),
-                'Unable to update the task.',
-                (currentTasks, updatedTask) =>
-                  currentTasks.map((currentTask) =>
-                    currentTask.id === updatedTask.id ? updatedTask : currentTask
-                  )
-              )
-            }
-            onDelete={(task) =>
-              handleMutation(
-                () => deleteTask(task.id),
-                'Unable to delete the task.',
-                (currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== task.id)
-              )
-            }
+            onToggleComplete={handleToggleTaskCompletion}
+            onDelete={handleDeleteTask}
             searchValue={searchValue}
-            onSearchChange={setSearchValue}
+            onSearchChange={handleSearchChange}
             statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
+            onStatusFilterChange={handleStatusFilterChange}
             priorityFilter={priorityFilter}
-            onPriorityFilterChange={setPriorityFilter}
+            onPriorityFilterChange={handlePriorityFilterChange}
             onReorder={handleReorder}
-            hasActiveFilters={Boolean(hasActiveFilters)}
-            onResetFilters={() => {
-              setFocusMode(false);
-              setSearchValue('');
-              setStatusFilter('all');
-              setPriorityFilter('all');
-            }}
+            hasActiveFilters={hasActiveFilters}
+            onResetFilters={handleResetFilters}
           />
         </div>
       </section>

@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { formatEstimatedMinutes } from '../lib/formatters';
 
-export default function SuggestionBanner({ task, selectedDate }) {
+const SuggestionBanner = memo(function SuggestionBanner({ task, selectedDate }) {
   if (!task) {
     return (
       <section className="panel suggestion-panel suggestion-empty">
@@ -33,4 +34,6 @@ export default function SuggestionBanner({ task, selectedDate }) {
       </div>
     </section>
   );
-}
+});
+
+export default SuggestionBanner;
