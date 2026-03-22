@@ -105,8 +105,29 @@ jobs:
       - name: Print Gradle failure summary
         if: failure()
         run: |
-          echo "Gradle build failed. Showing the last 200 lines from frontend/gradle-build.log"
-          tail -n 200 frontend/gradle-build.log || true
+          set -euo pipefail
+          echo "Gradle build failed. Extracting the most relevant lines from frontend/gradle-build.log"
+          echo ""
+          echo "---- FAILURE SECTION ----"
+          sed -n '/FAILURE: Build failed with an exception\./,$p' frontend/gradle-build.log | head -n 160 || true
+          echo ""
+          echo "---- KEY ERROR LINES ----"
+          rg -n "FAILURE:|What went wrong:|Execution failed for task|error:|Caused by:|> Task " frontend/gradle-build.log | tail -n 120 || true
+          echo ""
+          echo "---- LAST 120 LINES ----"
+          tail -n 120 frontend/gradle-build.log || true
+
+      - name: Write Gradle failure summary
+        if: failure()
+        run: |
+          set -euo pipefail
+          {
+            echo "## Android build failure"
+            echo ""
+            echo '```text'
+            sed -n '/FAILURE: Build failed with an exception\./,$p' frontend/gradle-build.log | head -n 120 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Inspect APK outputs
         if: always()
