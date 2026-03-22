@@ -35,6 +35,18 @@ function defaultTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function detectCompactVisualMode() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return false;
+  }
+
+  const isNativeRuntime = document.documentElement.classList.contains('native-runtime');
+  const prefersCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  const narrowViewport = window.matchMedia('(max-width: 1024px)').matches;
+
+  return isNativeRuntime || prefersCoarsePointer || narrowViewport;
+}
+
 export default function AuthTemplatePage({
   mode,
   error,
@@ -51,12 +63,33 @@ export default function AuthTemplatePage({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [localError, setLocalError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [compactVisualMode, setCompactVisualMode] = useState(detectCompactVisualMode);
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     password: '',
     remember: false
   });
+
+  useEffect(() => {
+    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+    const narrowViewportQuery = window.matchMedia('(max-width: 1024px)');
+
+    const refreshMode = () => {
+      setCompactVisualMode(detectCompactVisualMode());
+    };
+
+    refreshMode();
+    coarsePointerQuery.addEventListener('change', refreshMode);
+    narrowViewportQuery.addEventListener('change', refreshMode);
+    window.addEventListener('resize', refreshMode, { passive: true });
+
+    return () => {
+      coarsePointerQuery.removeEventListener('change', refreshMode);
+      narrowViewportQuery.removeEventListener('change', refreshMode);
+      window.removeEventListener('resize', refreshMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (document.getElementById(AUTH_FONT_STYLESHEET_ID)) {
@@ -96,7 +129,7 @@ export default function AuthTemplatePage({
 
   useEffect(() => {
     const panel = visualPanelRef.current;
-    if (!panel) {
+    if (!panel || compactVisualMode) {
       return undefined;
     }
 
@@ -157,7 +190,7 @@ export default function AuthTemplatePage({
       panel.removeEventListener('mousemove', handleMouseMove);
       panel.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, []);
+  }, [compactVisualMode]);
 
   function updateField(name, value) {
     setForm((current) => ({
@@ -256,9 +289,9 @@ export default function AuthTemplatePage({
         <aside className="authx-visual-panel" id="authx-visual-panel" ref={visualPanelRef}>
           <div className="authx-geo-canvas">
             <div className="authx-geo-grid" />
-            <div className="authx-geo-orb authx-geo-orb-1" />
-            <div className="authx-geo-orb authx-geo-orb-2" />
-            <div className="authx-geo-orb authx-geo-orb-3" />
+            {!compactVisualMode ? <div className="authx-geo-orb authx-geo-orb-1" /> : null}
+            {!compactVisualMode ? <div className="authx-geo-orb authx-geo-orb-2" /> : null}
+            {!compactVisualMode ? <div className="authx-geo-orb authx-geo-orb-3" /> : null}
           </div>
 
           <Link className="authx-brand" to="/">
@@ -284,42 +317,46 @@ export default function AuthTemplatePage({
               Join people who build their day with clarity. Priority-first planning turns overwhelm into execution.
             </p>
 
-            <div className="authx-feature-cards">
-              <div className="authx-feature-card">
-                <div className="authx-feature-icon authx-icon-indigo">⚡</div>
-                <div>
-                  <div className="authx-feature-title">Instant prioritization</div>
-                  <div className="authx-feature-desc">Top task always visible</div>
+            {!compactVisualMode ? (
+              <div className="authx-feature-cards">
+                <div className="authx-feature-card">
+                  <div className="authx-feature-icon authx-icon-indigo">⚡</div>
+                  <div>
+                    <div className="authx-feature-title">Instant prioritization</div>
+                    <div className="authx-feature-desc">Top task always visible</div>
+                  </div>
+                </div>
+                <div className="authx-feature-card">
+                  <div className="authx-feature-icon authx-icon-rose">✓</div>
+                  <div>
+                    <div className="authx-feature-title">Daily completion tracking</div>
+                    <div className="authx-feature-desc">Progress updates in real time</div>
+                  </div>
+                </div>
+                <div className="authx-feature-card">
+                  <div className="authx-feature-icon authx-icon-amber">🔒</div>
+                  <div>
+                    <div className="authx-feature-title">Secure by default</div>
+                    <div className="authx-feature-desc">JWT auth with rate-limited APIs</div>
+                  </div>
                 </div>
               </div>
-              <div className="authx-feature-card">
-                <div className="authx-feature-icon authx-icon-rose">✓</div>
-                <div>
-                  <div className="authx-feature-title">Daily completion tracking</div>
-                  <div className="authx-feature-desc">Progress updates in real time</div>
-                </div>
-              </div>
-              <div className="authx-feature-card">
-                <div className="authx-feature-icon authx-icon-amber">🔒</div>
-                <div>
-                  <div className="authx-feature-title">Secure by default</div>
-                  <div className="authx-feature-desc">JWT auth with rate-limited APIs</div>
-                </div>
-              </div>
-            </div>
+            ) : null}
 
-            <div className="authx-social-proof">
-              <div className="authx-avatars">
-                <div className="authx-avatar authx-avatar-1">AB</div>
-                <div className="authx-avatar authx-avatar-2">SK</div>
-                <div className="authx-avatar authx-avatar-3">RP</div>
-                <div className="authx-avatar authx-avatar-4">NJ</div>
-                <div className="authx-avatar authx-avatar-5">+</div>
+            {!compactVisualMode ? (
+              <div className="authx-social-proof">
+                <div className="authx-avatars">
+                  <div className="authx-avatar authx-avatar-1">AB</div>
+                  <div className="authx-avatar authx-avatar-2">SK</div>
+                  <div className="authx-avatar authx-avatar-3">RP</div>
+                  <div className="authx-avatar authx-avatar-4">NJ</div>
+                  <div className="authx-avatar authx-avatar-5">+</div>
+                </div>
+                <p className="authx-proof-text">
+                  <strong>Thousands of focused users</strong> build better days with DoFirst
+                </p>
               </div>
-              <p className="authx-proof-text">
-                <strong>Thousands of focused users</strong> build better days with DoFirst
-              </p>
-            </div>
+            ) : null}
           </div>
         </aside>
 

@@ -21,6 +21,8 @@ import {
 } from '../lib/productivity';
 
 const TASK_ORDER_STORAGE_PREFIX = 'smart-daily-planner-order-';
+const TASK_DATE_CACHE_TTL_MS = 30_000;
+const MAX_TASK_DATE_CACHE_ENTRIES = 14;
 const PRIORITY_RANK = {
   high: 3,
   medium: 2,
@@ -95,13 +97,51 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const selectedDateRef = useRef(selectedDate);
   const activeLoadAbortRef = useRef(null);
+  const taskDateCacheRef = useRef(new Map());
   const deferredSearchValue = useDeferredValue(searchValue);
 
+  const writeTaskDateCache = useCallback((taskDate, nextTasks) => {
+    const cache = taskDateCacheRef.current;
+    cache.delete(taskDate);
+    cache.set(taskDate, {
+      tasks: nextTasks,
+      cachedAt: Date.now()
+    });
+
+    while (cache.size > MAX_TASK_DATE_CACHE_ENTRIES) {
+      const oldestKey = cache.keys().next().value;
+      cache.delete(oldestKey);
+    }
+  }, []);
+
+  const readTaskDateCache = useCallback((taskDate) => {
+    const entry = taskDateCacheRef.current.get(taskDate);
+    if (!entry) {
+      return null;
+    }
+
+    if (Date.now() - entry.cachedAt > TASK_DATE_CACHE_TTL_MS) {
+      taskDateCacheRef.current.delete(taskDate);
+      return null;
+    }
+
+    return entry.tasks;
+  }, []);
+
   const loadDashboard = useCallback(async (taskDate, options = {}) => {
-    const loadedTasks = await getTasks(taskDate, options);
+    const { forceRefresh = false, ...requestOptions } = options;
+    const cachedTasks = forceRefresh ? null : readTaskDateCache(taskDate);
+
+    if (cachedTasks) {
+      setTasks(cachedTasks);
+      return cachedTasks;
+    }
+
+    const loadedTasks = await getTasks(taskDate, requestOptions);
+    writeTaskDateCache(taskDate, loadedTasks);
     setTasks(loadedTasks);
     return loadedTasks;
-  }, []);
+  }, [readTaskDateCache, writeTaskDateCache]);
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -323,9 +363,13 @@ export default function DashboardPage() {
       const result = await action();
 
       if (applyLocalUpdate && selectedDateRef.current === requestDate) {
-        setTasks((currentTasks) => applyLocalUpdate(currentTasks, result));
+        setTasks((currentTasks) => {
+          const nextTasks = applyLocalUpdate(currentTasks, result);
+          writeTaskDateCache(requestDate, nextTasks);
+          return nextTasks;
+        });
       } else {
-        await loadDashboard(selectedDateRef.current);
+        await loadDashboard(selectedDateRef.current, { forceRefresh: true });
       }
 
       return true;
@@ -340,7 +384,7 @@ export default function DashboardPage() {
     } finally {
       setIsMutating(false);
     }
-  }, [loadDashboard, logout]);
+  }, [loadDashboard, logout, writeTaskDateCache]);
 
   const handleSelectDate = useCallback((value) => {
     setSelectedDate(value);

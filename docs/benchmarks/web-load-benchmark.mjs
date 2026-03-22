@@ -2,6 +2,15 @@ import { chromium, devices } from 'playwright';
 
 const TARGET_URL = process.env.BENCH_URL || 'http://127.0.0.1:4173/login';
 const RUNS = Number.parseInt(process.env.BENCH_RUNS || '5', 10);
+const USE_SLOW_NETWORK = process.env.BENCH_SLOW_NETWORK === '1';
+
+const SLOW_NETWORK_PROFILE = {
+  offline: false,
+  latency: 300,
+  downloadThroughput: Math.floor((1.6 * 1024 * 1024) / 8),
+  uploadThroughput: Math.floor((750 * 1024) / 8),
+  connectionType: 'cellular3g'
+};
 
 const profiles = [
   {
@@ -32,6 +41,11 @@ async function runProfile(browser, profile) {
   for (let run = 0; run < RUNS; run += 1) {
     const context = await browser.newContext(profile.contextOptions);
     const page = await context.newPage();
+    if (USE_SLOW_NETWORK) {
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.emulateNetworkConditions', SLOW_NETWORK_PROFILE);
+    }
 
     await page.goto(TARGET_URL, { waitUntil: 'load' });
 
@@ -84,6 +98,7 @@ async function main() {
     const output = {
       url: TARGET_URL,
       generatedAt: new Date().toISOString(),
+      slowNetworkProfile: USE_SLOW_NETWORK ? SLOW_NETWORK_PROFILE : null,
       results
     };
 
