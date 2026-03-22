@@ -78,8 +78,45 @@ async function updateTask(pool, { taskId, updates }) {
   return result.rows[0];
 }
 
+async function updateTaskForUser(pool, { userId, taskId, updates }) {
+  const allowedFields = {
+    title: 'title',
+    priority: 'priority',
+    estimatedMinutes: 'estimated_minutes',
+    isCompleted: 'is_completed'
+  };
+
+  const entries = Object.entries(updates).filter(([key, value]) => allowedFields[key] && value !== undefined);
+  const values = [];
+  const assignments = entries.map(([key, value], index) => {
+    values.push(key === 'title' ? value.trim() : value);
+    return `${allowedFields[key]} = $${index + 1}`;
+  });
+
+  values.push(taskId);
+  values.push(userId);
+
+  const result = await pool.query(
+    `
+      UPDATE tasks
+      SET ${assignments.join(', ')}
+      WHERE id = $${values.length - 1}
+        AND user_id = $${values.length}
+      RETURNING ${TASK_COLUMNS}
+    `,
+    values
+  );
+
+  return result.rows[0] || null;
+}
+
 async function deleteTask(pool, taskId) {
   const result = await pool.query('DELETE FROM tasks WHERE id = $1', [taskId]);
+  return result.rowCount;
+}
+
+async function deleteTaskForUser(pool, { userId, taskId }) {
+  const result = await pool.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2', [taskId, userId]);
   return result.rowCount;
 }
 
@@ -104,8 +141,10 @@ module.exports = {
   countTasksForDate,
   createTask,
   deleteTask,
+  deleteTaskForUser,
   findSuggestion,
   findTaskById,
   listTasksForDate,
-  updateTask
+  updateTask,
+  updateTaskForUser
 };

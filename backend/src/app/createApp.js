@@ -126,7 +126,9 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
       listTasksForDate: (payload) => taskRepository.listTasksForDate(pool, payload),
       findTaskById: (taskId) => taskRepository.findTaskById(pool, taskId),
       updateTask: (payload) => taskRepository.updateTask(pool, payload),
+      updateTaskForUser: (payload) => taskRepository.updateTaskForUser(pool, payload),
       deleteTask: (taskId) => taskRepository.deleteTask(pool, taskId),
+      deleteTaskForUser: (payload) => taskRepository.deleteTaskForUser(pool, payload),
       findSuggestion: (payload) => taskRepository.findSuggestion(pool, payload)
     },
     logger

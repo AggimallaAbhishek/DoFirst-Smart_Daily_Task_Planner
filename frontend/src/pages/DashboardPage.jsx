@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import AppShell from '../components/AppShell';
 import DashboardToolbar from '../components/DashboardToolbar';
 import ProgressSummary from '../components/ProgressSummary';
@@ -76,6 +76,10 @@ function selectSuggestionTask(tasks) {
   }, null);
 }
 
+function isRequestCanceled(error) {
+  return error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError';
+}
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [selectedDate, setSelectedDate] = useState(getTodayDateKey);
@@ -90,12 +94,14 @@ export default function DashboardPage() {
   const [streakCount, setStreakCount] = useState(0);
   const [error, setError] = useState('');
   const selectedDateRef = useRef(selectedDate);
+  const activeLoadAbortRef = useRef(null);
   const deferredSearchValue = useDeferredValue(searchValue);
 
-  async function loadDashboard(taskDate) {
-    const loadedTasks = await getTasks(taskDate);
+  const loadDashboard = useCallback(async (taskDate, options = {}) => {
+    const loadedTasks = await getTasks(taskDate, options);
     setTasks(loadedTasks);
-  }
+    return loadedTasks;
+  }, []);
 
   useEffect(() => {
     selectedDateRef.current = selectedDate;
@@ -202,19 +208,29 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let isMounted = true;
+    const abortController = new AbortController();
+
+    if (activeLoadAbortRef.current) {
+      activeLoadAbortRef.current.abort();
+    }
+    activeLoadAbortRef.current = abortController;
 
     async function bootstrap() {
       try {
         setError('');
         setIsLoading(true);
-        const loadedTasks = await getTasks(selectedDate);
+        await loadDashboard(selectedDate, {
+          signal: abortController.signal
+        });
 
         if (!isMounted) {
           return;
         }
-
-        setTasks(loadedTasks);
       } catch (loadError) {
+        if (isRequestCanceled(loadError)) {
+          return;
+        }
+
         if (loadError.response?.status === 401) {
           logout();
           return;
@@ -224,7 +240,7 @@ export default function DashboardPage() {
           setError(getApiErrorMessage(loadError, 'Unable to load the dashboard.'));
         }
       } finally {
-        if (isMounted) {
+        if (isMounted && !abortController.signal.aborted) {
           setIsLoading(false);
         }
       }
@@ -234,8 +250,12 @@ export default function DashboardPage() {
 
     return () => {
       isMounted = false;
+      abortController.abort();
+      if (activeLoadAbortRef.current === abortController) {
+        activeLoadAbortRef.current = null;
+      }
     };
-  }, [logout, selectedDate]);
+  }, [loadDashboard, logout, selectedDate]);
 
   function handleReorder(draggedTaskId, targetTaskId) {
     setManualOrder((current) => {

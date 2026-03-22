@@ -40,11 +40,8 @@ describe('taskService extra branches', () => {
 
   test('deletes a task for its owner', async () => {
     const repository = {
-      findTaskById: jest.fn().mockResolvedValue({
-        id: 'task-1',
-        user_id: 'user-1'
-      }),
-      deleteTask: jest.fn().mockResolvedValue(1)
+      deleteTaskForUser: jest.fn().mockResolvedValue(1),
+      findTaskById: jest.fn()
     };
     const taskService = createTaskService({
       taskRepository: repository,
@@ -53,12 +50,17 @@ describe('taskService extra branches', () => {
 
     await taskService.deleteTaskForUser('user-1', 'task-1');
 
-    expect(repository.deleteTask).toHaveBeenCalledWith('task-1');
+    expect(repository.deleteTaskForUser).toHaveBeenCalledWith({
+      userId: 'user-1',
+      taskId: 'task-1'
+    });
+    expect(repository.findTaskById).not.toHaveBeenCalled();
   });
 
   test('throws not found when deleting a missing task', async () => {
     const taskService = createTaskService({
       taskRepository: {
+        deleteTaskForUser: jest.fn().mockResolvedValue(0),
         findTaskById: jest.fn().mockResolvedValue(null)
       },
       logger

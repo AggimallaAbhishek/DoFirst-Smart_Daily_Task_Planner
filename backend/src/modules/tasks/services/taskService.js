@@ -64,47 +64,53 @@ function createTaskService({ taskRepository, logger }) {
   }
 
   async function updateTaskForUser(userId, taskId, updates) {
-    const task = await taskRepository.findTaskById(taskId);
-
-    if (!task) {
-      throw createHttpError(404, 'Task not found.');
-    }
-
-    if (task.user_id !== userId) {
-      throw createHttpError(403, 'You are not allowed to modify this task.');
-    }
-
     logger.debug('Updating task.', {
       userId,
       taskId,
       updateKeys: Object.keys(updates)
     });
 
-    const updatedTask = await taskRepository.updateTask({
+    const updatedTask = await taskRepository.updateTaskForUser({
+      userId,
       taskId,
       updates
     });
 
-    return mapTask(updatedTask);
-  }
+    if (updatedTask) {
+      return mapTask(updatedTask);
+    }
 
-  async function deleteTaskForUser(userId, taskId) {
     const task = await taskRepository.findTaskById(taskId);
 
     if (!task) {
       throw createHttpError(404, 'Task not found.');
     }
 
-    if (task.user_id !== userId) {
-      throw createHttpError(403, 'You are not allowed to delete this task.');
-    }
+    throw createHttpError(403, 'You are not allowed to modify this task.');
+  }
 
+  async function deleteTaskForUser(userId, taskId) {
     logger.debug('Deleting task.', {
       userId,
       taskId
     });
 
-    await taskRepository.deleteTask(taskId);
+    const deletedCount = await taskRepository.deleteTaskForUser({
+      userId,
+      taskId
+    });
+
+    if (deletedCount > 0) {
+      return;
+    }
+
+    const task = await taskRepository.findTaskById(taskId);
+
+    if (!task) {
+      throw createHttpError(404, 'Task not found.');
+    }
+
+    throw createHttpError(403, 'You are not allowed to delete this task.');
   }
 
   async function getSuggestionForUser(userId, taskDateInput) {
@@ -137,3 +143,4 @@ module.exports = {
   currentTaskDate,
   normalizeTaskDate
 };
+

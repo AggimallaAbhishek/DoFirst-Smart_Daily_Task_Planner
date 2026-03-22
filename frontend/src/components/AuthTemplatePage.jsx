@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const AUTH_FONT_STYLESHEET_ID = 'authx-font-stylesheet';
+const AUTH_FONT_STYLESHEET_URL =
+  'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap';
 
 const GOOGLE_ICON = (
   <svg className="authx-google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -54,6 +57,18 @@ export default function AuthTemplatePage({
     password: '',
     remember: false
   });
+
+  useEffect(() => {
+    if (document.getElementById(AUTH_FONT_STYLESHEET_ID)) {
+      return;
+    }
+
+    const link = document.createElement('link');
+    link.id = AUTH_FONT_STYLESHEET_ID;
+    link.rel = 'stylesheet';
+    link.href = AUTH_FONT_STYLESHEET_URL;
+    document.head.appendChild(link);
+  }, []);
 
   useEffect(() => {
     setLocalError('');

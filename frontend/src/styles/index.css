@@ -56,6 +56,10 @@ body::before {
   z-index: 1000;
 }
 
+html.native-runtime body::before {
+  display: none;
+}
+
 #root {
   min-height: 100vh;
 }
@@ -113,10 +117,46 @@ body::before {
 }
 
 @media (hover: none), (pointer: coarse) {
+  body::before {
+    display: none;
+  }
+
+  .marquee-track {
+    animation: none !important;
+    transform: translateX(0) !important;
+  }
+
+  .planner-nav {
+    backdrop-filter: none;
+  }
+
   #cursor,
   #cursor-trail {
     display: none;
   }
+}
+
+html.native-runtime .marquee-track {
+  animation: none !important;
+  transform: translateX(0) !important;
+}
+
+html.native-runtime .planner-nav {
+  backdrop-filter: none;
+}
+
+html.native-runtime .authx-geo-orb {
+  animation: none !important;
+  filter: blur(30px);
+  opacity: 0.12;
+}
+
+html.native-runtime .authx-feature-card,
+html.native-runtime .authx-social-proof,
+html.native-runtime .authx-card {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -34,6 +34,7 @@ async function loadRuntimeSecrets(config, logger) {
     'SENTRY_DSN',
     'ALLOWED_ORIGINS',
     'GOOGLE_OAUTH_CLIENT_ID',
+    'GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS',
     'GOOGLE_OAUTH_CLIENT_SECRET'
   ];
 

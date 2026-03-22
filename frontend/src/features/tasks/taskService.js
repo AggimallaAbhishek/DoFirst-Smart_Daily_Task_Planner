@@ -1,10 +1,37 @@
 import httpClient from '../../api/httpClient';
 
-export async function getTasks(taskDate) {
-  const response = await httpClient.get('/api/tasks', {
-    params: taskDate ? { taskDate } : undefined
-  });
-  return response.data.tasks;
+const pendingTaskRequests = new Map();
+
+function buildTasksRequestKey(taskDate) {
+  return taskDate || 'today';
+}
+
+export async function getTasks(taskDate, options = {}) {
+  const requestKey = buildTasksRequestKey(taskDate);
+  const hasAbortSignal = Boolean(options.signal);
+
+  if (!hasAbortSignal) {
+    const existingRequest = pendingTaskRequests.get(requestKey);
+    if (existingRequest) {
+      return existingRequest;
+    }
+  }
+
+  const requestPromise = httpClient
+    .get('/api/tasks', {
+      params: taskDate ? { taskDate } : undefined,
+      signal: options.signal
+    })
+    .then((response) => response.data.tasks);
+
+  if (!hasAbortSignal) {
+    pendingTaskRequests.set(requestKey, requestPromise);
+    requestPromise.finally(() => {
+      pendingTaskRequests.delete(requestKey);
+    });
+  }
+
+  return requestPromise;
 }
 
 export async function createTask(payload) {

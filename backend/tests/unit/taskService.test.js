@@ -42,6 +42,7 @@ describe('taskService', () => {
   test('rejects updates for tasks owned by another user', async () => {
     const taskService = createTaskService({
       taskRepository: {
+        updateTaskForUser: jest.fn().mockResolvedValue(null),
         findTaskById: jest.fn().mockResolvedValue({
           id: '9d9e5fd6-e786-4c66-bea8-38101f640621',
           user_id: 'other-user'
