@@ -10,7 +10,7 @@ function createGoogleOAuthClient({ config }) {
   async function getProfileFromCode(code) {
     const tokenResponse = await oauthClient.getToken({
       code,
-      redirect_uri: 'postmessage'
+      redirect_uri: config.googleOauthRedirectUri || 'postmessage'
     });
     const idToken = tokenResponse?.tokens?.id_token;
 

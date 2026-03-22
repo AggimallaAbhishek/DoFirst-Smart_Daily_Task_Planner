@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 
   async function handleSubmit(credentials) {
     setError('');
@@ -34,7 +35,8 @@ export default function LoginPage() {
 
     try {
       const code = await requestGoogleAuthCode({
-        clientId: googleClientId
+        clientId: googleClientId,
+        redirectUri: googleRedirectUri
       });
       await loginWithGoogle(code);
       navigate('/', { replace: true });

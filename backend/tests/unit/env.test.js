@@ -13,6 +13,7 @@ describe('resolveConfig', () => {
     expect(config.allowedOrigins).toEqual(['http://localhost:5173', 'http://127.0.0.1:5173']);
     expect(config.trustProxy).toBe(false);
     expect(config.dbSslRejectUnauthorized).toBe(false);
+    expect(config.googleOauthRedirectUri).toBe('postmessage');
   });
 
   test('throws in production when allowed origins are missing', () => {
@@ -41,5 +42,18 @@ describe('resolveConfig', () => {
     expect(config.allowedOrigins).toEqual(['https://app.example.com']);
     expect(config.trustProxy).toBe(2);
     expect(config.dbSslRejectUnauthorized).toBe(true);
+    expect(config.googleOauthRedirectUri).toBe('postmessage');
+  });
+
+  test('supports custom google oauth redirect uri', () => {
+    const config = resolveConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
+      JWT_SECRET: 'prod-secret',
+      FRONTEND_ORIGIN: 'https://app.example.com',
+      GOOGLE_OAUTH_REDIRECT_URI: 'https://app.example.com/auth/google/callback'
+    });
+
+    expect(config.googleOauthRedirectUri).toBe('https://app.example.com/auth/google/callback');
   });
 });

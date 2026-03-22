@@ -40,10 +40,13 @@ function loadGoogleScript() {
   return scriptLoadPromise;
 }
 
-export async function requestGoogleAuthCode({ clientId }) {
+export async function requestGoogleAuthCode({ clientId, redirectUri: requestedRedirectUri }) {
   if (!clientId) {
     throw new Error('Google sign-in is not configured. Add VITE_GOOGLE_CLIENT_ID.');
   }
+
+  const configuredRedirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI?.trim();
+  const redirectUri = requestedRedirectUri?.trim() || configuredRedirectUri || 'postmessage';
 
   await loadGoogleScript();
   const oauthApi = getGoogleAccountsApi();
@@ -57,6 +60,8 @@ export async function requestGoogleAuthCode({ clientId }) {
       client_id: clientId,
       scope: 'openid email profile',
       ux_mode: 'popup',
+      redirect_uri: redirectUri,
+      select_account: true,
       callback: (response) => {
         if (!response) {
           reject(new Error('Google sign-in was interrupted. Please try again.'));
@@ -74,6 +79,13 @@ export async function requestGoogleAuthCode({ clientId }) {
         }
 
         resolve(response.code);
+      },
+      error_callback: (error) => {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.debug('[Google OAuth] error_callback', error);
+        }
+        reject(new Error(error?.message || error?.type || 'Google sign-in failed.'));
       }
     });
 
