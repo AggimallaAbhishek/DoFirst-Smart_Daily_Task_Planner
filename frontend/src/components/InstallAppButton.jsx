@@ -1,6 +1,40 @@
 import { useEffect, useState } from 'react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 
+function triggerDownloadFromUrl(url) {
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.rel = 'noopener noreferrer';
+  anchor.target = '_blank';
+
+  try {
+    const resolved = new URL(url, window.location.href);
+    if (resolved.origin === window.location.origin) {
+      anchor.download = '';
+      anchor.target = '_self';
+    }
+  } catch {
+    // Keep default behavior for malformed external URLs.
+  }
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}
+
+function downloadWebShortcut() {
+  const shortcutBody = `[InternetShortcut]\nURL=${window.location.origin}/\n`;
+  const blob = new Blob([shortcutBody], { type: 'text/plain;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = blobUrl;
+  anchor.download = 'DoFirst.url';
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(blobUrl);
+}
+
 export default function InstallAppButton() {
   const downloadUrl = import.meta.env.VITE_APP_DOWNLOAD_URL?.trim();
   const {
@@ -49,16 +83,19 @@ export default function InstallAppButton() {
 
       if (result.status === 'unsupported') {
         if (downloadUrl) {
-          window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-          setFeedback('Download opened in a new tab. Complete installation from that page.');
+          triggerDownloadFromUrl(downloadUrl);
+          setFeedback('Download started. Complete installation from the downloaded file.');
           return;
         }
 
+        downloadWebShortcut();
+
         if (isSafari) {
-          setFeedback('Use Safari menu to install: Share -> Add to Home Screen.');
-        } else {
-          setFeedback('Use Chrome or Edge menu: open settings and choose "Install app".');
+          setFeedback('Shortcut downloaded. On Safari use Share -> Add to Home Screen for app install.');
+          return;
         }
+
+        setFeedback('Shortcut downloaded. For native install, use Chrome/Edge menu -> Install app.');
       }
     } finally {
       setIsOpeningPrompt(false);
