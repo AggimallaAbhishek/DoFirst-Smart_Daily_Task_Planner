@@ -2276,6 +2276,14 @@ main {
   opacity: 1;
 }
 
+.authx-google-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--authx-text-secondary);
+  text-align: center;
+}
+
 .authx-divider {
   display: flex;
   align-items: center;

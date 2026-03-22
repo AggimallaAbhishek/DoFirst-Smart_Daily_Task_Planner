@@ -48,6 +48,7 @@ export default function AuthTemplatePage({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [localError, setLocalError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [isNativeApp, setIsNativeApp] = useState(false);
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -60,6 +61,16 @@ export default function AuthTemplatePage({
     setFieldErrors({});
     setPasswordVisible(false);
   }, [mode]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const platform = window.Capacitor?.getPlatform?.();
+    const isNativePlatform = window.Capacitor?.isNativePlatform?.();
+    setIsNativeApp(Boolean(isNativePlatform || platform === 'android' || platform === 'ios'));
+  }, []);
 
   const resolvedError = localError || error;
 
@@ -139,6 +150,10 @@ export default function AuthTemplatePage({
 
   async function handleGoogleSignIn() {
     if (googleLoading || isSubmitting) {
+      return;
+    }
+
+    if (isNativeApp) {
       return;
     }
 
@@ -326,7 +341,7 @@ export default function AuthTemplatePage({
             <button
               aria-label="Continue with Google"
               className="authx-btn-google"
-              disabled={googleLoading || isSubmitting}
+              disabled={googleLoading || isSubmitting || isNativeApp}
               onClick={handleGoogleSignIn}
               type="button"
             >
@@ -334,6 +349,9 @@ export default function AuthTemplatePage({
               <span className={`authx-google-text ${googleLoading ? 'hidden' : ''}`}>Continue with Google</span>
               <div className={`authx-btn-spinner ${googleLoading ? 'visible' : ''}`} />
             </button>
+            {isNativeApp ? (
+              <p className="authx-google-note">Google sign-in is web-only right now. Use email and password in APK.</p>
+            ) : null}
 
             <div className="authx-divider">
               <div className="authx-divider-line" />

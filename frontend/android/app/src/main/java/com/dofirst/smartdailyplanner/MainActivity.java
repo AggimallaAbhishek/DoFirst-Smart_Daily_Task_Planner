@@ -1,0 +1,5 @@
+package com.dofirst.smartdailyplanner;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}
