@@ -8,15 +8,22 @@
     "build": "vite build",
     "lint": "eslint \"src/**/*.{js,jsx}\"",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "cap:add:android": "npx cap add android",
+    "cap:sync:android": "npx cap sync android",
+    "apk:debug": "npm run build && (test -d android || npx cap add android) && npx cap sync android && cd android && ./gradlew assembleDebug",
+    "apk:release:unsigned": "npm run build && (test -d android || npx cap add android) && npx cap sync android && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
     "axios": "^1.9.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",

@@ -1,0 +1,6 @@
+{
+  "appId": "com.dofirst.smartdailyplanner",
+  "appName": "DoFirst",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
