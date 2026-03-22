@@ -3,11 +3,9 @@ import { usePwaInstall } from '../hooks/usePwaInstall';
 
 export default function InstallAppButton() {
   const {
-    canInstall,
     dismissIosHint,
     installApp,
     isInstalled,
-    isIos,
     isSafari,
     showIosHint,
     showSuccess
@@ -44,7 +42,7 @@ export default function InstallAppButton() {
     return null;
   }
 
-  const shouldShowButton = canInstall || (isIos && !isInstalled);
+  const shouldShowButton = !isInstalled;
 
   return (
     <div className="install-app-wrapper">

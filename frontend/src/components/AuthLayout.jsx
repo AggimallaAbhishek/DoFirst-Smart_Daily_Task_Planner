@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import InstallAppButton from './InstallAppButton';
 
 export default function AuthLayout({
   eyebrow,
@@ -15,6 +16,9 @@ export default function AuthLayout({
         <Link className="nav-logo" to="/">
           DoFirst<span>.</span>
         </Link>
+        <div className="nav-right">
+          <InstallAppButton />
+        </div>
       </nav>
       <div className="auth-grid">
         <section className="auth-hero">
