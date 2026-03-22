@@ -7,11 +7,14 @@ describe('application routes', () => {
     authRateLimitMax: 5,
     apiRateLimitMax: 100,
     rateLimitWindowMs: 15 * 60 * 1000,
+    requestTimeoutMs: 30 * 1000,
+    slowRequestThresholdMs: 1000,
     jwtSecret: 'test-secret',
     jwtExpiresIn: '24h'
   };
   const logger = {
     info: jest.fn(),
+    warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn()
   };

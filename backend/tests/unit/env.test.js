@@ -23,16 +23,21 @@ describe('resolveConfig', () => {
     expect(config.googleOauthRedirectUri).toBe('postmessage');
   });
 
-  test('throws in production when allowed origins are missing', () => {
-    expect(() =>
-      resolveConfig({
-        NODE_ENV: 'production',
-        DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
-        JWT_SECRET: 'prod-secret',
-        FRONTEND_ORIGIN: '',
-        ALLOWED_ORIGINS: ''
-      })
-    ).toThrow('ALLOWED_ORIGINS or FRONTEND_ORIGIN must be defined in production.');
+  test('uses native app origins in production when web origins are missing', () => {
+    const config = resolveConfig({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://user:pass@db.example.com:5432/app',
+      JWT_SECRET: 'prod-secret',
+      FRONTEND_ORIGIN: '',
+      ALLOWED_ORIGINS: ''
+    });
+
+    expect(config.allowedOrigins).toEqual([
+      'http://localhost',
+      'https://localhost',
+      'capacitor://localhost',
+      'ionic://localhost'
+    ]);
   });
 
   test('parses trust proxy and production defaults', () => {
