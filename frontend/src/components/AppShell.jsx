@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import InstallAppButton from './InstallAppButton';
 import { formatTodayLabel } from '../lib/formatters';
 
 export default function AppShell({ user, onLogout, children }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userLabel = user?.name || user?.email?.split('@')?.[0] || 'User';
   const avatarFallback = userLabel
     .split(' ')
@@ -23,17 +24,42 @@ export default function AppShell({ user, onLogout, children }) {
     };
 
     handleScroll();
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  function closeMobileMenu() {
+    setIsMobileMenuOpen(false);
+  }
 
   return (
     <div className="planner-page">
       <nav className="planner-nav" id="nav">
-        <a href="#hero" className="nav-logo">
+        <a href="#hero" className="nav-logo" onClick={closeMobileMenu}>
           <img src="/DoFirst.png" alt="DoFirst logo" className="nav-logo-image" />
           <span className="nav-logo-wordmark">
             DoFirst<span className="nav-logo-dot">.</span>
@@ -53,7 +79,25 @@ export default function AppShell({ user, onLogout, children }) {
             <a href="#tasks">Checklist</a>
           </li>
         </ul>
-        <div className="nav-right">
+        <button
+          type="button"
+          className={`nav-menu-toggle ${isMobileMenuOpen ? 'open' : ''}`}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-panel"
+          onClick={() => setIsMobileMenuOpen((current) => !current)}
+        >
+          <span className="nav-menu-line" />
+          <span className="nav-menu-line" />
+          <span className="nav-menu-line" />
+          <span className="sr-only">Toggle menu</span>
+        </button>
+        <div className={`nav-right ${isMobileMenuOpen ? 'open' : ''}`} id="mobile-nav-panel">
+          <div className="nav-mobile-links">
+            <a href="#suggestion" onClick={closeMobileMenu}>Focus</a>
+            <a href="#progress" onClick={closeMobileMenu}>Progress</a>
+            <a href="#form" onClick={closeMobileMenu}>Add Task</a>
+            <a href="#tasks" onClick={closeMobileMenu}>Checklist</a>
+          </div>
           <InstallAppButton />
           <div className="nav-user-card">
             {user?.avatarUrl ? (
@@ -66,7 +110,14 @@ export default function AppShell({ user, onLogout, children }) {
               <span className="nav-user-email">{user?.email}</span>
             </div>
           </div>
-          <button type="button" className="nav-cta interactive" onClick={onLogout}>
+          <button
+            type="button"
+            className="nav-cta interactive"
+            onClick={() => {
+              closeMobileMenu();
+              onLogout();
+            }}
+          >
             Logout
           </button>
         </div>

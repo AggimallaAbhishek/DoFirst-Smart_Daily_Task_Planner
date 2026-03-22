@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 
 export default function InstallAppButton() {
+  const downloadUrl = import.meta.env.VITE_APP_DOWNLOAD_URL?.trim();
   const {
     canInstall,
     dismissIosHint,
@@ -47,6 +48,12 @@ export default function InstallAppButton() {
       }
 
       if (result.status === 'unsupported') {
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+          setFeedback('Download opened in a new tab. Complete installation from that page.');
+          return;
+        }
+
         if (isSafari) {
           setFeedback('Use Safari menu to install: Share -> Add to Home Screen.');
         } else {
@@ -63,7 +70,7 @@ export default function InstallAppButton() {
   }
 
   const shouldShowButton = !isInstalled;
-  const buttonLabel = canInstall || isIos ? 'Install App' : 'How to Install';
+  const buttonLabel = canInstall || isIos ? 'Install App' : downloadUrl ? 'Download App' : 'How to Install';
 
   return (
     <div className="install-app-wrapper">

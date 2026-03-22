@@ -219,6 +219,53 @@ button {
   gap: 0.9rem;
 }
 
+.nav-mobile-links {
+  display: none;
+}
+
+.nav-menu-toggle {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.nav-menu-line {
+  width: 100%;
+  height: 1.5px;
+  background: var(--text);
+  transition: transform 0.25s var(--ease-out), opacity 0.2s var(--ease-out);
+}
+
+.nav-menu-toggle.open .nav-menu-line:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-menu-toggle.open .nav-menu-line:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-menu-toggle.open .nav-menu-line:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 .install-app-wrapper {
   position: relative;
   display: inline-flex;
@@ -1328,36 +1375,180 @@ main {
 }
 
 @media (max-width: 768px) {
+  .planner-nav {
+    padding: 0.95rem 1rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .nav-menu-toggle {
+    display: inline-flex;
+  }
+
   .nav-links {
     display: none;
   }
 
-  .nav-user-card {
-    padding: 0.28rem 0.4rem;
+  .planner-page .nav-right {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    left: 1rem;
+    right: 1rem;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.72rem;
+    border: 1px solid var(--border);
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 0.9rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .planner-page .nav-right.open {
+    display: flex;
+  }
+
+  .planner-page .nav-mobile-links {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .planner-page .nav-mobile-links a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+  }
+
+  .planner-page .nav-mobile-links a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .planner-page .nav-user-card {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.45rem 0.55rem;
   }
 
   .install-app-wrapper {
-    align-items: flex-start;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .install-app-button {
+    width: 100%;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 0.65rem 0.9rem;
   }
 
   .install-app-feedback {
     text-align: left;
-    max-width: 220px;
+    max-width: 100%;
   }
 
-  .nav-user-name {
-    max-width: 90px;
+  .nav-cta {
+    width: 100%;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 0.65rem 0.95rem;
+  }
+
+  .planner-page .nav-user-name {
+    max-width: 110px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .nav-user-email {
+  .planner-page .nav-user-email {
     display: none;
   }
 
   .hero {
-    padding-top: 7rem;
+    min-height: auto;
+    padding: 7.2rem 1rem 2.8rem;
+  }
+
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    gap: 0.7rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .hero-eyebrow::before {
+    width: 26px;
+  }
+
+  .hero-headline {
+    font-size: clamp(2.45rem, 12.3vw, 3.7rem);
+    line-height: 0.92;
+    margin: 0 0 1.1rem;
+  }
+
+  .hero-copy-block,
+  .hero-desc {
+    max-width: none;
+  }
+
+  .hero-anchor-copy {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .hero-desc {
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  .hero-scroll {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .hero-accent-bg {
+    width: 360px;
+    height: 360px;
+    right: -120px;
+    bottom: -140px;
+    opacity: 0.45;
+  }
+
+  .marquee-section {
+    padding: 0.85rem 0;
+  }
+
+  .marquee-track {
+    gap: 2.5rem;
+    animation-duration: 24s;
+  }
+
+  .planner-section {
+    padding: 1.25rem 1rem 0;
+  }
+
+  .panel {
+    padding: 1.2rem;
+  }
+
+  .panel-title {
+    font-size: clamp(1.5rem, 7.2vw, 2rem);
+  }
+
+  .panel-copy {
+    font-size: 0.9rem;
+    line-height: 1.65;
   }
 
   .hero-sub,
@@ -1375,6 +1566,39 @@ main {
 
   .toolbar-date-controls {
     width: 100%;
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .toolbar-date-controls .toolbar-button.subtle {
+    grid-column: 1 / -1;
+  }
+
+  .toolbar-button,
+  .toolbar-toggle,
+  .toolbar-icon-button,
+  .toolbar-day-pill {
+    min-height: 44px;
+    font-size: 12px;
+    padding: 0.62rem 0.8rem;
+  }
+
+  .toolbar-date-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  .task-action {
+    min-height: 44px;
+    padding: 0.55rem 0.8rem;
+  }
+
+  .form-submit {
+    min-height: 44px;
   }
 
   .task-filter-grid {
@@ -1396,6 +1620,108 @@ main {
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .planner-footer {
+    padding: 1.5rem 1rem;
+  }
+
+  .footer-socials {
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-social {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .planner-nav {
+    padding: 0.8rem 0.75rem;
+  }
+
+  .nav-logo {
+    gap: 0.45rem;
+    font-size: 1.05rem;
+  }
+
+  .nav-logo-image {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .planner-page .nav-right {
+    left: 0.75rem;
+    right: 0.75rem;
+    top: calc(100% + 0.45rem);
+  }
+
+  .planner-page .nav-mobile-links {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 6.5rem 0.75rem 2.3rem;
+  }
+
+  .hero-headline {
+    font-size: clamp(2.1rem, 12.8vw, 3rem);
+    letter-spacing: -0.02em;
+  }
+
+  .hero-desc {
+    font-size: 0.86rem;
+  }
+
+  .planner-section {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .toolbar-date-controls {
+    grid-template-columns: 40px 1fr 40px;
+  }
+
+  .task-item {
+    padding: 0.85rem;
+  }
+
+  .task-title {
+    font-size: 1.25rem;
+  }
+
+  .auth-nav {
+    padding: 1rem 0.75rem 0;
+  }
+
+  .auth-grid {
+    padding: 1rem 0.75rem 2.2rem;
+  }
+
+  .auth-hero {
+    padding: 1.2rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-headline {
+    font-size: clamp(1.9rem, 13vw, 2.55rem);
+  }
+
+  .panel-title {
+    font-size: 1.4rem;
+  }
+
+  .section-label {
+    letter-spacing: 0.14em;
+    font-size: 10px;
   }
 }
 
