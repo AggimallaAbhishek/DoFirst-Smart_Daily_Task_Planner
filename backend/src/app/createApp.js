@@ -18,9 +18,26 @@ const { createTaskService } = require('../modules/tasks/services/taskService');
 const { createHttpError } = require('../utils/httpError');
 
 function createCorsOptions(config) {
+  function isNativeLoopbackOrigin(origin) {
+    if (!origin || typeof origin !== 'string') {
+      return false;
+    }
+
+    if (origin === 'capacitor://localhost' || origin === 'ionic://localhost') {
+      return true;
+    }
+
+    try {
+      const parsed = new URL(origin);
+      return ['http:', 'https:'].includes(parsed.protocol) && ['localhost', '127.0.0.1'].includes(parsed.hostname);
+    } catch (error) {
+      return false;
+    }
+  }
+
   return {
     origin(origin, callback) {
-      if (!origin || config.allowedOrigins.includes(origin)) {
+      if (!origin || config.allowedOrigins.includes(origin) || isNativeLoopbackOrigin(origin)) {
         callback(null, true);
         return;
       }

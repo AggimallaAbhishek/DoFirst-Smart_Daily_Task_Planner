@@ -62,4 +62,18 @@ describe('application routes', () => {
     expect(response.body.status).toBe('ok');
     expect(query).not.toHaveBeenCalled();
   });
+
+  test('allows native app loopback origins used by Capacitor', async () => {
+    const app = createApp({
+      config,
+      logger,
+      pool: {
+        query: jest.fn().mockResolvedValue({ rows: [{ '?column?': 1 }] })
+      }
+    });
+
+    const response = await request(app).get('/health').set('Origin', 'http://localhost:8080');
+
+    expect(response.statusCode).toBe(200);
+  });
 });

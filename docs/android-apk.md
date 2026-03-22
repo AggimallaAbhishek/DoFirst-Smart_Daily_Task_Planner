@@ -16,7 +16,25 @@ GitHub Secret (`Settings -> Secrets and variables -> Actions -> Secrets`):
 
 - `VITE_GOOGLE_CLIENT_ID=<your-google-oauth-web-client-id>`
 
-## 2) Build APK from GitHub Actions
+## 2) Google Cloud OAuth setup required for APK
+
+Native Google sign-in in APK requires both OAuth client types:
+
+1. Web client (used by backend verification):
+   - Use this value as `VITE_GOOGLE_CLIENT_ID` and backend `GOOGLE_OAUTH_CLIENT_ID`.
+2. Android client:
+   - Package name: `com.dofirst.smartdailyplanner`
+   - SHA-1: signing certificate SHA-1 used to sign the APK
+
+To check SHA-1 from an already-built APK:
+
+```bash
+keytool -printcert -jarfile app-debug.apk | grep -i "SHA1"
+```
+
+Then add that SHA-1 in Google Cloud Console for the Android OAuth client.
+
+## 3) Build APK from GitHub Actions
 
 1. Push your latest changes to GitHub.
 2. Open `Actions` in your repo.
@@ -28,7 +46,7 @@ Output file in artifact:
 
 - `app-debug.apk`
 
-## 3) Host APK on Vercel
+## 4) Host APK on Vercel
 
 1. Place the downloaded APK at:
    - `frontend/public/downloads/dofirst-debug.apk`
@@ -39,7 +57,7 @@ APK public URL will be:
 
 - `https://do-first-smart-daily-task-planner-f.vercel.app/downloads/dofirst-debug.apk`
 
-## 4) Wire install button to download URL
+## 5) Wire install button to download URL
 
 Set Vercel environment variable:
 
@@ -51,3 +69,4 @@ Redeploy frontend after updating env.
 
 - `app-debug.apk` is for testing/sideloading.
 - For Play Store release, use a signed release build (`assembleRelease` + keystore signing).
+- Backend CORS in this project allows Capacitor loopback origins (`http://localhost`, `http://localhost:<port>`, `capacitor://localhost`) for APK API calls.
