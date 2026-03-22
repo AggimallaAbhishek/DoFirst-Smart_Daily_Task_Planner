@@ -111,7 +111,26 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
     next(createHttpError(403, 'Origin is not allowed by CORS policy.'));
   });
   app.use(express.json({ limit: '10kb' }));
-  app.use(requestLogger(logger));
+  app.use(requestLogger(logger, config));
+  app.use((request, response, next) => {
+    response.setTimeout(config.requestTimeoutMs, () => {
+      logger.warn('Request timed out.', {
+        requestId: request.requestId,
+        method: request.method,
+        path: request.originalUrl,
+        timeoutMs: config.requestTimeoutMs,
+        userId: request.user?.id || null
+      });
+
+      if (!response.headersSent) {
+        response.status(504).json({
+          error: 'Request timed out. Please try again.'
+        });
+      }
+    });
+
+    next();
+  });
   app.use('/api', rateLimiters.apiRateLimiter);
 
   app.get('/', (request, response) =>

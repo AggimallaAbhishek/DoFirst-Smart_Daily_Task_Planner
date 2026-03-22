@@ -5,6 +5,42 @@ const { createPool } = require('./db/pool');
 const { createApp } = require('./app/createApp');
 const { createLogger } = require('./utils/logger');
 
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function ensureDatabaseConnection(pool, logger, config) {
+  const attempts = config.dbConnectMaxRetries;
+  const retryDelayMs = config.dbConnectRetryDelayMs;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await pool.query('SELECT 1');
+      logger.info('Database connection established.', { attempt });
+      return;
+    } catch (error) {
+      logger.warn('Database connection attempt failed.', {
+        attempt,
+        attempts,
+        reason: error.message
+      });
+
+      if (attempt === attempts) {
+        if (config.dbStartupRequired) {
+          throw new Error(`Database unavailable after ${attempts} attempts. ${error.message}`);
+        }
+
+        logger.warn('Continuing startup without confirmed database connection.');
+        return;
+      }
+
+      await wait(retryDelayMs);
+    }
+  }
+}
+
 async function startServer() {
   let config = resolveConfig();
   let logger = createLogger(config.logLevel);
@@ -21,6 +57,7 @@ async function startServer() {
   initializeSentry(config);
 
   const pool = createPool(config);
+  await ensureDatabaseConnection(pool, logger, config);
   const app = createApp({
     config,
     logger,

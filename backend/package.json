@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "build": "node -e \"console.log('Backend build uses Docker packaging.')\"",
+    "build": "node -e \"console.log('Backend build step complete.')\"",
     "lint": "eslint \"src/**/*.js\" \"tests/**/*.js\"",
     "test": "jest --runInBand --coverage",
     "test:unit": "jest --runInBand --coverage=false tests/unit",

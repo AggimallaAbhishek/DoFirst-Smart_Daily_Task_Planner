@@ -40,7 +40,12 @@ function createPool(config) {
 
   return new Pool({
     connectionString,
-    ssl
+    ssl,
+    max: config.dbPoolMax,
+    idleTimeoutMillis: config.dbIdleTimeoutMs,
+    connectionTimeoutMillis: config.dbConnectionTimeoutMs,
+    query_timeout: config.dbQueryTimeoutMs,
+    statement_timeout: config.dbConnectStatementTimeoutMs
   });
 }
 
