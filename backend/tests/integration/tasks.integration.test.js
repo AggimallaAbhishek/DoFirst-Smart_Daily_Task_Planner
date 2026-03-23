@@ -108,6 +108,11 @@ describe('task routes', () => {
 
   test('filters tasks by taskDate query parameter', async () => {
     const token = await registerAndLogin(app, 'owner@example.com');
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+    const tomorrow = tomorrowDate.toISOString().slice(0, 10);
 
     await request(app)
       .post('/api/tasks')
@@ -115,7 +120,8 @@ describe('task routes', () => {
       .send({
         title: 'Today task',
         priority: 'medium',
-        estimatedMinutes: 30
+        estimatedMinutes: 30,
+        taskDate: today
       });
 
     await request(app)
@@ -125,13 +131,13 @@ describe('task routes', () => {
         title: 'Tomorrow task',
         priority: 'high',
         estimatedMinutes: 15,
-        taskDate: '2026-03-22'
+        taskDate: tomorrow
       });
 
     const response = await request(app)
       .get('/api/tasks')
       .query({
-        taskDate: '2026-03-22'
+        taskDate: tomorrow
       })
       .set('Authorization', `Bearer ${token}`);
 
