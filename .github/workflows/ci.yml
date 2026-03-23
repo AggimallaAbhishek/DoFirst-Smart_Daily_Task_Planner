@@ -30,12 +30,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://planner:planner@localhost:5432/smart_daily_planner
-      TEST_DATABASE_URL: postgresql://planner:planner@localhost:5432/smart_daily_planner
+      DATABASE_URL: postgresql://planner:planner@127.0.0.1:5432/smart_daily_planner
+      TEST_DATABASE_URL: postgresql://planner:planner@127.0.0.1:5432/smart_daily_planner
       JWT_SECRET: ci-test-secret
-      FRONTEND_ORIGIN: http://localhost:5173
+      FRONTEND_ORIGIN: http://127.0.0.1:5173
       ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
-      VITE_API_URL: http://localhost:3000
+      VITE_API_URL: http://127.0.0.1:3000
       CI: true
     steps:
       - name: Check out repository
@@ -96,15 +96,19 @@ jobs:
 
       - name: Run database migrations
         run: |
-          npm run db:migrate --workspace backend || \
-          (cd backend && npm run db:migrate) || \
-          echo "Migration step completed"
+          set -euo pipefail
+          if ! npm run db:migrate --workspace backend; then
+            echo "Workspace migration command failed, retrying via backend directory..."
+            (cd backend && npm run db:migrate)
+          fi
 
       - name: Run backend tests
         run: |
-          npm run test --workspace backend || \
-          (cd backend && npm test) || \
-          echo "Backend tests completed"
+          set -euo pipefail
+          if ! npm run test --workspace backend; then
+            echo "Workspace backend test command failed, retrying via backend directory..."
+            (cd backend && npm test)
+          fi
 
       - name: Build applications
         run: npm run build
@@ -244,6 +248,8 @@ jobs:
 
       - name: Run Playwright E2E tests
         run: |
-          npm run test:e2e --workspace frontend || \
-          (cd frontend && npm run test:e2e) || \
-          echo "E2E tests completed"
+          set -euo pipefail
+          if ! npm run test:e2e --workspace frontend; then
+            echo "Workspace frontend E2E command failed, retrying via frontend directory..."
+            (cd frontend && npm run test:e2e)
+          fi
