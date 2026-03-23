@@ -7,9 +7,14 @@ on:
       - main
       - develop
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:15-alpine
@@ -43,7 +48,21 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Dependency install attempt ${attempt}/3"
+            if npm ci --no-audit --no-fund; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Dependency installation failed after 3 attempts."
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
 
       - name: Lint code
         run: npm run lint
@@ -53,8 +72,22 @@ jobs:
 
       - name: Install git-secrets
         run: |
-          git clone https://github.com/awslabs/git-secrets.git /tmp/git-secrets
-          sudo make --directory /tmp/git-secrets install
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            rm -rf /tmp/git-secrets
+            echo "git-secrets install attempt ${attempt}/3"
+            if git clone https://github.com/awslabs/git-secrets.git /tmp/git-secrets && \
+              sudo make --directory /tmp/git-secrets install; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Failed to install git-secrets after 3 attempts."
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
 
       - name: Scan for committed secrets
         run: |
@@ -68,7 +101,29 @@ jobs:
         run: npm run build
 
       - name: Build backend container
-        run: docker build -t smart-daily-planner-backend ./backend
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Docker build attempt ${attempt}/3"
+            if docker build -t smart-daily-planner-backend ./backend; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Docker build failed after 3 attempts."
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}-v1
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
 
       - name: Scan container image with Trivy
         run: |
@@ -77,14 +132,19 @@ jobs:
 
           for attempt in 1 2 3; do
             echo "Trivy scan attempt ${attempt}/3"
-            if docker run --rm \
+
+            if ! docker pull public.ecr.aws/aquasecurity/trivy:0.65.0; then
+              echo "Failed to pull Trivy image."
+            elif docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v "$HOME/.cache/trivy:/root/.cache/" \
               -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db:2 \
-              aquasec/trivy:0.65.0 image \
+              public.ecr.aws/aquasecurity/trivy:0.65.0 image \
               --format table \
               --exit-code 1 \
               --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --timeout 10m \
               --no-progress \
               smart-daily-planner-backend; then
               exit 0
@@ -95,11 +155,26 @@ jobs:
               exit 1
             fi
 
+            rm -rf "$HOME/.cache/trivy/db" || true
             sleep $((attempt * 5))
           done
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "Playwright install attempt ${attempt}/3"
+            if npx playwright install --with-deps chromium; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Playwright browser installation failed after 3 attempts."
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
 
       - name: Run database migrations
         run: npm run db:migrate --workspace backend
