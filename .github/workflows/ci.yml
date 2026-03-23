@@ -148,6 +148,7 @@ jobs:
             if docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v "$HOME/.cache/trivy:/root/.cache/" \
+              -v /tmp:/tmp \
               -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db:2 \
               "$TRIVY_IMAGE" image \
               --format json \
@@ -158,7 +159,17 @@ jobs:
               --timeout 10m \
               --no-progress \
               smart-daily-planner-backend; then
-              LIB_HIGH_CRITICAL_COUNT="$(node -e "const fs=require('fs');const report=JSON.parse(fs.readFileSync('/tmp/trivy-lib.json','utf8'));let total=0;for(const result of report.Results||[]){for(const vuln of result.Vulnerabilities||[]){if(vuln.Severity==='HIGH'||vuln.Severity==='CRITICAL'){total+=1;}}}process.stdout.write(String(total));")"
+              LIB_HIGH_CRITICAL_COUNT=$(node -e '
+                var fs=require("fs");
+                var report=JSON.parse(fs.readFileSync("/tmp/trivy-lib.json","utf8"));
+                var total=0;
+                (report.Results||[]).forEach(function(r){
+                  (r.Vulnerabilities||[]).forEach(function(v){
+                    if(v.Severity==="HIGH"||v.Severity==="CRITICAL"){total+=1;}
+                  });
+                });
+                process.stdout.write(String(total));
+              ')
 
               echo "Trivy library vulnerabilities (HIGH+CRITICAL): ${LIB_HIGH_CRITICAL_COUNT}"
 
@@ -171,6 +182,7 @@ jobs:
               docker run --rm \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -v "$HOME/.cache/trivy:/root/.cache/" \
+                -v /tmp:/tmp \
                 -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db:2 \
                 "$TRIVY_IMAGE" image \
                 --format table \
