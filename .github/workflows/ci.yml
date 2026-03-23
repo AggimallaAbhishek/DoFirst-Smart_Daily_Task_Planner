@@ -71,12 +71,32 @@ jobs:
         run: docker build -t smart-daily-planner-backend ./backend
 
       - name: Scan container image with Trivy
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          image-ref: smart-daily-planner-backend
-          format: table
-          exit-code: '1'
-          severity: HIGH,CRITICAL
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.cache/trivy"
+
+          for attempt in 1 2 3; do
+            echo "Trivy scan attempt ${attempt}/3"
+            if docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$HOME/.cache/trivy:/root/.cache/" \
+              -e TRIVY_DB_REPOSITORY=public.ecr.aws/aquasecurity/trivy-db:2 \
+              aquasec/trivy:0.65.0 image \
+              --format table \
+              --exit-code 1 \
+              --severity HIGH,CRITICAL \
+              --no-progress \
+              smart-daily-planner-backend; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Trivy scan failed after 3 attempts."
+              exit 1
+            fi
+
+            sleep $((attempt * 5))
+          done
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
