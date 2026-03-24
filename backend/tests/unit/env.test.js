@@ -20,6 +20,7 @@ describe('resolveConfig', () => {
     ]);
     expect(config.trustProxy).toBe(false);
     expect(config.dbSslRejectUnauthorized).toBe(false);
+    expect(config.taskReadCacheMaxEntries).toBe(500);
     expect(config.googleOauthRedirectUri).toBe('postmessage');
   });
 
@@ -48,13 +49,15 @@ describe('resolveConfig', () => {
       FRONTEND_ORIGIN: 'https://app.example.com',
       TRUST_PROXY: '2',
       DB_SSL_REJECT_UNAUTHORIZED: 'true',
-      ENABLE_NATIVE_APP_ORIGINS: 'false'
+      ENABLE_NATIVE_APP_ORIGINS: 'false',
+      TASK_READ_CACHE_MAX_ENTRIES: '250'
     });
 
     expect(config.logLevel).toBe('info');
     expect(config.allowedOrigins).toEqual(['https://app.example.com']);
     expect(config.trustProxy).toBe(2);
     expect(config.dbSslRejectUnauthorized).toBe(true);
+    expect(config.taskReadCacheMaxEntries).toBe(250);
     expect(config.googleOauthRedirectUri).toBe('postmessage');
   });
 

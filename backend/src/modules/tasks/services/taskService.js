@@ -2,6 +2,7 @@ const { createHttpError } = require('../../../utils/httpError');
 const { mapTask } = require('../../../utils/mappers');
 
 const DEFAULT_TASK_READ_CACHE_TTL_MS = 1500;
+const DEFAULT_TASK_READ_CACHE_MAX_ENTRIES = 500;
 
 function currentTaskDate() {
   return new Date().toISOString().slice(0, 10);
@@ -23,12 +24,46 @@ function createTaskCacheKey(userId, taskDate, key) {
   return `${userId}:${taskDate}:${key}`;
 }
 
-function createTaskService({ taskRepository, logger, readCacheTtlMs = DEFAULT_TASK_READ_CACHE_TTL_MS }) {
+function createTaskService({
+  taskRepository,
+  logger,
+  readCacheTtlMs = DEFAULT_TASK_READ_CACHE_TTL_MS,
+  readCacheMaxEntries = DEFAULT_TASK_READ_CACHE_MAX_ENTRIES
+}) {
   const effectiveCacheTtlMs =
     Number.isFinite(readCacheTtlMs) && readCacheTtlMs > 0
       ? readCacheTtlMs
       : DEFAULT_TASK_READ_CACHE_TTL_MS;
+  const effectiveCacheMaxEntries =
+    Number.isFinite(readCacheMaxEntries) && readCacheMaxEntries > 0
+      ? readCacheMaxEntries
+      : DEFAULT_TASK_READ_CACHE_MAX_ENTRIES;
   const readCache = new Map();
+
+  function pruneExpiredEntries() {
+    const now = Date.now();
+    for (const [cacheKey, cacheEntry] of readCache.entries()) {
+      if (cacheEntry.expiresAt > now) {
+        continue;
+      }
+
+      readCache.delete(cacheKey);
+    }
+  }
+
+  function evictLeastRecentlyUsedEntry() {
+    const oldestKey = readCache.keys().next().value;
+    if (!oldestKey) {
+      return;
+    }
+
+    readCache.delete(oldestKey);
+    logger.debug('Evicted least recently used task cache entry.', {
+      cacheKey: oldestKey,
+      cacheSize: readCache.size,
+      cacheMaxEntries: effectiveCacheMaxEntries
+    });
+  }
 
   function getCachedValue(cacheKey) {
     const cachedEntry = readCache.get(cacheKey);
@@ -48,6 +83,10 @@ function createTaskService({ taskRepository, logger, readCacheTtlMs = DEFAULT_TA
       };
     }
 
+    // Refresh insertion order to keep the entry as most-recently-used.
+    readCache.delete(cacheKey);
+    readCache.set(cacheKey, cachedEntry);
+
     return {
       hit: true,
       value: cachedEntry.value
@@ -55,10 +94,20 @@ function createTaskService({ taskRepository, logger, readCacheTtlMs = DEFAULT_TA
   }
 
   function setCachedValue(cacheKey, value) {
+    pruneExpiredEntries();
+
+    if (readCache.has(cacheKey)) {
+      readCache.delete(cacheKey);
+    }
+
     readCache.set(cacheKey, {
       value,
       expiresAt: Date.now() + effectiveCacheTtlMs
     });
+
+    while (readCache.size > effectiveCacheMaxEntries) {
+      evictLeastRecentlyUsedEntry();
+    }
   }
 
   function invalidateTaskDateCache(userId, taskDate) {

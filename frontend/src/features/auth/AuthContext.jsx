@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/apiError';
 import { clearSession, getStoredSession, saveSession } from '../../lib/session';
 import { loginUser, loginWithGoogle, registerUser } from './authService';
@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     setIsBootstrapping(false);
   }, []);
 
-  async function login(credentials) {
+  const login = useCallback(async (credentials) => {
     const result = await loginUser(credentials);
     const nextSession = {
       token: result.token,
@@ -23,14 +23,14 @@ export function AuthProvider({ children }) {
     saveSession(nextSession);
     setSession(nextSession);
     return nextSession.user;
-  }
+  }, []);
 
-  async function register(credentials) {
+  const register = useCallback(async (credentials) => {
     await registerUser(credentials);
     return login(credentials);
-  }
+  }, [login]);
 
-  async function loginViaGoogle(payload) {
+  const loginViaGoogle = useCallback(async (payload) => {
     const result = await loginWithGoogle(payload);
     const nextSession = {
       token: result.token,
@@ -40,24 +40,27 @@ export function AuthProvider({ children }) {
     saveSession(nextSession);
     setSession(nextSession);
     return nextSession.user;
-  }
+  }, []);
 
-  function logout() {
+  const logout = useCallback(() => {
     clearSession();
     setSession(null);
-  }
+  }, []);
 
-  const value = {
-    user: session?.user || null,
-    token: session?.token || null,
-    isAuthenticated: Boolean(session?.token),
-    isBootstrapping,
-    login,
-    loginWithGoogle: loginViaGoogle,
-    register,
-    logout,
-    getApiErrorMessage
-  };
+  const value = useMemo(
+    () => ({
+      user: session?.user || null,
+      token: session?.token || null,
+      isAuthenticated: Boolean(session?.token),
+      isBootstrapping,
+      login,
+      loginWithGoogle: loginViaGoogle,
+      register,
+      logout,
+      getApiErrorMessage
+    }),
+    [isBootstrapping, login, loginViaGoogle, logout, register, session]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

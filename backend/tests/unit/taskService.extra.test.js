@@ -224,4 +224,40 @@ describe('taskService extra branches', () => {
 
     expect(repository.findSuggestion).toHaveBeenCalledTimes(1);
   });
+
+  test('evicts least recently used cache entries when max size is exceeded', async () => {
+    const repository = {
+      listTasksForDate: jest.fn().mockImplementation(async ({ taskDate }) => [
+        {
+          id: `task-${taskDate}`,
+          user_id: 'user-1',
+          title: `Task ${taskDate}`,
+          priority: 'high',
+          estimated_minutes: 30,
+          is_completed: false,
+          task_date: taskDate,
+          created_at: '2026-03-21T10:00:00.000Z'
+        }
+      ])
+    };
+    const taskService = createTaskService({
+      taskRepository: repository,
+      logger,
+      readCacheTtlMs: 60_000,
+      readCacheMaxEntries: 2
+    });
+
+    await taskService.listTodayTasks('user-1', '2026-03-21');
+    await taskService.listTodayTasks('user-1', '2026-03-22');
+    await taskService.listTodayTasks('user-1', '2026-03-23');
+    await taskService.listTodayTasks('user-1', '2026-03-21');
+
+    expect(repository.listTasksForDate).toHaveBeenCalledTimes(4);
+    expect(logger.debug).toHaveBeenCalledWith(
+      'Evicted least recently used task cache entry.',
+      expect.objectContaining({
+        cacheMaxEntries: 2
+      })
+    );
+  });
 });

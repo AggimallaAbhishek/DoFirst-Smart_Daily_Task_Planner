@@ -124,6 +124,7 @@ function resolveConfig(source = process.env) {
     dbConnectRetryDelayMs: parsePositiveInteger(source.DB_CONNECT_RETRY_DELAY_MS, 3000),
     dbStartupRequired: parseBoolean(source.DB_STARTUP_REQUIRED, true),
     taskReadCacheTtlMs: parsePositiveInteger(source.TASK_READ_CACHE_TTL_MS, 1500),
+    taskReadCacheMaxEntries: parsePositiveInteger(source.TASK_READ_CACHE_MAX_ENTRIES, 500),
     dbConnectStatementTimeoutMs: parseNonNegativeInteger(source.DB_STATEMENT_TIMEOUT_MS, 12 * 1000),
     awsRegion: source.AWS_REGION || 'ap-south-1',
     awsSecretsManagerSecretId: source.AWS_SECRETS_MANAGER_SECRET_ID || '',

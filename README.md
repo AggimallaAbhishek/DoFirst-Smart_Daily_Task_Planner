@@ -51,6 +51,7 @@ Set backend environment variables in Vercel:
 - `AUTH_RATE_LIMIT_MAX=5`
 - `API_RATE_LIMIT_MAX=100`
 - `RATE_LIMIT_WINDOW_MS=900000`
+- `TASK_READ_CACHE_MAX_ENTRIES=500` (optional, bounds in-memory task read cache size)
 - `GOOGLE_OAUTH_CLIENT_ID=<google-client-id>`
 - `GOOGLE_OAUTH_ADDITIONAL_CLIENT_IDS=<comma-separated-android-or-extra-client-ids>` (optional, recommended when APK/native client differs)
 - `GOOGLE_OAUTH_CLIENT_SECRET=<google-client-secret>`

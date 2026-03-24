@@ -133,7 +133,8 @@ function createApp({ config, logger, pool, startedAt = Date.now() }) {
       findSuggestion: (payload) => taskRepository.findSuggestion(pool, payload)
     },
     logger,
-    readCacheTtlMs: config.taskReadCacheTtlMs
+    readCacheTtlMs: config.taskReadCacheTtlMs,
+    readCacheMaxEntries: config.taskReadCacheMaxEntries
   });
   const authController = createAuthController({
     authService,

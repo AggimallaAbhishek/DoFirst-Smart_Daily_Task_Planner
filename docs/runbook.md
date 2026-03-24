@@ -24,3 +24,17 @@ This runbook captures the minimum operational procedures for the Smart Daily Pla
 2. Update the secret in AWS Secrets Manager or the backend environment.
 3. Redeploy the backend.
 4. Expect existing sessions to expire within 24 hours.
+
+## Tune CI vulnerability gate
+
+The CI workflow uses Trivy and can be tuned with GitHub repository variables:
+
+- `TRIVY_MAX_HIGH_CRITICAL_TOTAL`: maximum allowed HIGH/CRITICAL library vulnerabilities before CI fails (default: `15`).
+- `TRIVY_FAIL_ON_FIXABLE_ONLY`: when `true`, only vulnerabilities with a known fix version count toward the blocking threshold (default: `true`).
+- `TRIVY_BLOCK_ON_INFRA_FAILURE`: when `true`, CI fails if Trivy infrastructure fails after retries (default: `false`).
+
+Generated Trivy artifacts:
+
+- `/tmp/trivy-lib.json`
+- `/tmp/trivy-lib-summary.json`
+- `/tmp/trivy-os-report.txt`
