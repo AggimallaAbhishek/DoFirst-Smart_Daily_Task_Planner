@@ -1,34 +1,27 @@
 import { useEffect, useState } from 'react';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 
-function triggerDownloadFromUrl(url) {
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.rel = 'noopener noreferrer';
-  anchor.target = '_blank';
+function downloadWebAppLauncher() {
+  const appUrl = `${window.location.origin}/`;
+  const launcherHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DoFirst Web App Launcher</title>
+    <meta http-equiv="refresh" content="0;url=${appUrl}" />
+  </head>
+  <body>
+    <p>Opening DoFirst...</p>
+    <p>If not redirected, <a href="${appUrl}">click here</a>.</p>
+  </body>
+</html>`;
 
-  try {
-    const resolved = new URL(url, window.location.href);
-    if (resolved.origin === window.location.origin) {
-      anchor.download = '';
-      anchor.target = '_self';
-    }
-  } catch {
-    // Keep default behavior for malformed external URLs.
-  }
-
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-}
-
-function downloadWebShortcut() {
-  const shortcutBody = `[InternetShortcut]\nURL=${window.location.origin}/\n`;
-  const blob = new Blob([shortcutBody], { type: 'text/plain;charset=utf-8' });
+  const blob = new Blob([launcherHtml], { type: 'text/html;charset=utf-8' });
   const blobUrl = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = blobUrl;
-  anchor.download = 'DoFirst.url';
+  anchor.download = 'DoFirst-WebApp.html';
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
@@ -36,7 +29,6 @@ function downloadWebShortcut() {
 }
 
 export default function InstallAppButton() {
-  const downloadUrl = import.meta.env.VITE_APP_DOWNLOAD_URL?.trim();
   const {
     canInstall,
     dismissIosHint,
@@ -82,20 +74,8 @@ export default function InstallAppButton() {
       }
 
       if (result.status === 'unsupported') {
-        if (downloadUrl) {
-          triggerDownloadFromUrl(downloadUrl);
-          setFeedback('Download started. Complete installation from the downloaded file.');
-          return;
-        }
-
-        downloadWebShortcut();
-
-        if (isSafari) {
-          setFeedback('Shortcut downloaded. On Safari use Share -> Add to Home Screen for app install.');
-          return;
-        }
-
-        setFeedback('Shortcut downloaded. For native install, use Chrome/Edge menu -> Install app.');
+        downloadWebAppLauncher();
+        setFeedback('Download started. Open DoFirst-WebApp.html from your Downloads folder to launch the web app.');
       }
     } finally {
       setIsOpeningPrompt(false);
@@ -107,7 +87,7 @@ export default function InstallAppButton() {
   }
 
   const shouldShowButton = !isInstalled;
-  const buttonLabel = canInstall || isIos ? 'Install App' : downloadUrl ? 'Download App' : 'Install';
+  const buttonLabel = canInstall || isIos ? 'Install App' : 'Download App';
 
   return (
     <div className="install-app-wrapper">
